@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Frame based game - jgame.js</title>
+<script type="text/javascript" src="../jgame.js/src/js/jgame.js"></script>
+<script type="text/javascript" src="js/jgengine.js"></script>
+<script type="text/javascript">
+window.onload = function() {
+	var game = new jgengine.FrameGame(480, 480, 30);
+	for (var i=0; i<50; i++) {
+		var shape = new Shape(48, 48);
+		shape.moveTo(240, 240);
+		var xmove = Math.floor(Math.random() * 801 - 400);
+		var ymove = Math.floor(Math.random() * 801 - 400);
+		shape.tl().moveBy(-xmove, -ymove, 60).moveBy(xmove, ymove, 60).loop();
+		game.currentScene.append(shape);
+	}
+}
+</script>
+</head>
+<body>
+	<div id="fps_show"></div>
+	<div id="container">
+		<div id="menu">
+			この例では、30fps目標のフレームベースで動作します。通常29程度になるでしょう。<br />
+			特にTimelineの第三引数の数値が、時間単位ではなくフレーム単位になっている点に注意してください。<br />
+			FrameGameクラスは元々jgame.js本体に入っていましたが、利用頻度が少ないためver 1.1から本モジュールに移されました。
+		</div>
+		<div id="body">
+			<div id="game-here"></div>
+		</div>
+	</div>
+</body>
+</html>

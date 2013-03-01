@@ -1,0 +1,5 @@
+../../jgame.js/src/ts/webaudio.d.ts
+../../jgame.js/src/js/jgame.d.ts
+jgengine.ts
+--out ../js/jgengine.js
+--declaration
