@@ -68,10 +68,8 @@ var jgengine;
         TwinLoopGame.prototype.main = function () {
             var _this = this;
             var fps_stack = new Array();
-            var _main = function (t) {
-                if(t === undefined) {
-                    t = Date.now ? Date.now() : new Date().getTime();
-                }
+            var _main = function () {
+                var t = Date.now ? Date.now() : new Date().getTime();
                 if(_this.tick > (t + 10000) || (_this.tick + 10000) < t) {
                     _this.tick = t - 1;
                     _this.renderTick = t - _this.targetFps;

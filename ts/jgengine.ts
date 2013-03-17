@@ -60,9 +60,8 @@ module jgengine {
 		wait:number = 0;
 		main() {
 			var fps_stack = new number[];
-			var _main = (t:number) => {
-				if (t === undefined)
-					t = Date.now ? Date.now() : new Date().getTime();
+			var _main = () => {
+				var t = Date.now ? Date.now() : new Date().getTime();
 				if (this.tick > (t+10000) || (this.tick+10000) < t) {
 					//this.tick > (t+10000): 前回更新分が10秒以上未来の時間の場合。多分タイマーバグっとるのでリセット
 					//(this.tick+10000) < t: 10秒以上更新されてない。多分タイマーバグっとる。バグっとるよね？
