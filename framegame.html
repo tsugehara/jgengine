@@ -14,7 +14,7 @@ window.onload = function() {
 		var xmove = Math.floor(Math.random() * 801 - 400);
 		var ymove = Math.floor(Math.random() * 801 - 400);
 		shape.tl().moveBy(-xmove, -ymove, 60).moveBy(xmove, ymove, 60).loop();
-		game.currentScene.append(shape);
+		game.scene.append(shape);
 	}
 }
 </script>

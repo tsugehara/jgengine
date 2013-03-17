@@ -16,8 +16,10 @@ var jgengine;
         FrameGame.prototype.main = function () {
             var _this = this;
             var fps_stack = new Array();
-            var _main = function () {
-                var t = window.getTime();
+            var _main = function (t) {
+                if(t === undefined) {
+                    t = Date.now ? Date.now() : new Date().getTime();
+                }
                 if(_this.tick > (t + 10000) || (_this.tick + 10000) < t) {
                     _this.tick = t - 1;
                     _this.renderTick = t - _this.targetFps;
@@ -49,8 +51,8 @@ var jgengine;
                     window.requestAnimationFrame(_main);
                 }
             };
-            this.tick = window.getTime();
-            this.renderTick = this.tick - this.targetFps;
+            this.tick = 0;
+            this.renderTick = 0;
             window.requestAnimationFrame(_main);
         };
         return FrameGame;
@@ -66,8 +68,10 @@ var jgengine;
         TwinLoopGame.prototype.main = function () {
             var _this = this;
             var fps_stack = new Array();
-            var _main = function () {
-                var t = window.getTime();
+            var _main = function (t) {
+                if(t === undefined) {
+                    t = Date.now ? Date.now() : new Date().getTime();
+                }
                 if(_this.tick > (t + 10000) || (_this.tick + 10000) < t) {
                     _this.tick = t - 1;
                     _this.renderTick = t - _this.targetFps;
@@ -87,8 +91,10 @@ var jgengine;
                     window.setTimeout(_main, _this.wait);
                 }
             };
-            var _render = function () {
-                var t = window.getTime();
+            var _render = function (t) {
+                if(t === undefined) {
+                    t = Date.now ? Date.now() : new Date().getTime();
+                }
                 if(_this.enterFrame) {
                     if(!_this.enterFrameTick) {
                         _this.enterFrameTick = t - 1;
@@ -119,8 +125,8 @@ var jgengine;
                     window.requestAnimationFrame(_render);
                 }
             };
-            this.tick = window.getTime();
-            this.renderTick = this.tick - this.targetFps;
+            this.tick = 0;
+            this.renderTick = 0;
             window.setTimeout(_main, 0);
             window.requestAnimationFrame(_render);
         };

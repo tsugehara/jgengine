@@ -11,8 +11,10 @@ module jgengine {
 
 		main() {
 			var fps_stack = new number[];
-			var _main = () => {
-				var t:number = window.getTime();
+			var _main = (t:number) => {
+				if (t === undefined)
+					t = Date.now ? Date.now() : new Date().getTime();
+
 				if (this.tick > (t+10000) || (this.tick+10000) < t) {
 					//this.tick > (t+10000): 前回更新分が10秒以上未来の時間の場合。多分タイマーバグっとるのでリセット
 					//(this.tick+10000) < t: 10秒以上更新されてない。多分タイマーバグっとる。バグっとるよね？
@@ -47,8 +49,8 @@ module jgengine {
 					window.requestAnimationFrame(_main);
 			}
 
-			this.tick = window.getTime();
-			this.renderTick = this.tick - this.targetFps;
+			this.tick = 0;
+			this.renderTick = 0;
 			window.requestAnimationFrame(_main);
 		}
 	}
@@ -58,8 +60,9 @@ module jgengine {
 		wait:number = 0;
 		main() {
 			var fps_stack = new number[];
-			var _main = () => {
-				var t:number = window.getTime();
+			var _main = (t:number) => {
+				if (t === undefined)
+					t = Date.now ? Date.now() : new Date().getTime();
 				if (this.tick > (t+10000) || (this.tick+10000) < t) {
 					//this.tick > (t+10000): 前回更新分が10秒以上未来の時間の場合。多分タイマーバグっとるのでリセット
 					//(this.tick+10000) < t: 10秒以上更新されてない。多分タイマーバグっとる。バグっとるよね？
@@ -82,8 +85,9 @@ module jgengine {
 					window.setTimeout(_main, this.wait);
 			}
 
-			var _render = () => {
-				var t:number = window.getTime();
+			var _render = (t:number) => {
+				if (t === undefined)
+					t = Date.now ? Date.now() : new Date().getTime();
 
 				if (this.enterFrame) {
 					if (! this.enterFrameTick)
@@ -116,8 +120,8 @@ module jgengine {
 					window.requestAnimationFrame(_render);
 			}
 
-			this.tick = window.getTime();
-			this.renderTick = this.tick - this.targetFps;
+			this.tick = 0;
+			this.renderTick = 0;
 			window.setTimeout(_main, 0);
 			window.requestAnimationFrame(_render);
 		}
