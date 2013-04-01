@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Recording game - jgame.js</title>
+<script type="text/javascript" src="js/jgame.js"></script>
+<script type="text/javascript" src="js/external/jquery-1.8.3.js"></script>
+<script type="text/javascript" src="js/external/sample.js"></script>
+<script type="text/javascript" src="js/jgengine.js"></script>
+<script type="text/javascript">
+var logs = [];
+var seed;
+var player;
+function play() {
+	if (player) {
+		alert("二回再生は出来ません。\nブラウザの更新操作などで、再度ゲームをプレーしてください。")
+	}
+	console.log("---------------------");
+	player = new jgengine.ReplayGame(480, 300, document.getElementById("player"));
+	var s2 = new jgengine.BinarySerializer(player);
+	player.setSeed(seed);
+	var logScene = 1;
+	var _main = function() {
+		if (logs.length == 0) {
+			console.log("Replay ended.");
+			return;
+		}
+		var log;
+		var e;
+		do {
+			var log = logs.shift();
+			var e = s2.deserialize(log);
+			if (e.type != 0) {
+				logScene = e.t;
+				if (player.sceneIndex < logScene) {
+					console.log("wait for synchronized scene... "+player.sceneIndex+":"+logScene);
+					logs.unshift(log);
+					break;
+				} else {
+					
+				}
+			} else {
+				if (player.sceneIndex > logScene) {
+					//読み飛ばす
+					console.log("skipt scene to scene synchronized..."+player.sceneIndex+":"+logScene);
+				} else {
+					for (var i=0; i<e.events.length; i++) {
+						player.eventQueue.push(e.events[i]);
+					}
+					player.manualUpdate(e.t)
+					player.manualRender();
+				}
+			}
+		} while (e.type != 0);
+		window.requestAnimationFrame(_main);
+	}
+	player.preload({eye:"eye-multi.png"});
+	var loaded = function() {
+		player.loaded.remove(loaded);
+		var scene = new ShootingScene(player);
+		scene.start();
+	}
+	player.loaded.handle(loaded);
+	game = player;
+	window.requestAnimationFrame(_main);
+}
+window.onload = function() {
+	var game = new jgengine.LoggingGame(480, 300, document.getElementById("recorder"));
+	if (location.search) {
+		seed = parseInt(location.search.substr(1));
+		game.setSeed(seed);
+	}
+	seed = game.seed;
+	var serializer = new jgengine.BinarySerializer(game);
+	game.log.handle(function(e) {
+		var data = serializer.serialize(e);
+		logs.push(data);
+	})
+	game.preload({eye:"eye-multi.png"});
+	var loaded = function() {
+		game.loaded.remove(loaded);
+		var scene = new ShootingScene(game);
+		scene.start();
+	}
+	game.loaded.handle(loaded);
+}
+</script>
+</head>
+<body>
+	<div id="fps_show"></div>
+	<div id="container">
+		<div id="menu">
+			<div>
+				この例ではゲームのプレー状況を記録し、再生ボタンにて再生します。
+			</div>
+			<div>
+				<input type="button" value="再生" onclick="play()" />
+			</div>
+		</div>
+	</div>
+	<div>
+		<div id="recorder"></div>
+		<div id="player"></div>
+	</div>
+</body>
+</html>

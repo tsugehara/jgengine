@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Static game - jgame.js</title>
+<script type="text/javascript" src="../jgame.js/src/js/jgame.js"></script>
+<script type="text/javascript" src="js/jgengine.js"></script>
+<script type="text/javascript">
+window.onload = function() {
+	var game = new jgengine.StaticGame(480, 480);
+	for (var i=0; i<50; i++) {
+		var shape = new Shape(48, 48);
+		shape.moveTo(240, 240);
+		var xmove = Math.floor(Math.random() * 801 - 400);
+		var ymove = Math.floor(Math.random() * 801 - 400);
+		shape.tl().moveBy(-xmove, -ymove, 2000).moveBy(xmove, ymove, 2000).loop();
+		game.scene.append(shape);
+	}
+	document.getElementById("updateBtn").onclick = function() {
+		var m = parseInt(document.getElementById("m").value);
+		game.manualUpdate(m);
+	}
+	document.getElementById('renderBtn').onclick = function() {
+		game.manualRender();
+	}
+	document.getElementById('urBtn').onclick = function() {
+		var m = parseInt(document.getElementById("m").value);
+		game.manualUpdate(m);
+		game.manualRender();
+	}
+}
+</script>
+</head>
+<body>
+	<div id="fps_show"></div>
+	<div id="container">
+		<div id="menu">
+			StaticGameは、自力で一切の更新をしない特殊なゲームです。<br/>
+			単にjgame.jsを静的描画エンジンとして使いたい場合に利用します。<br />
+			下記のupdateボタンで、左側ボックス分のミリ秒を経過させます。下記のrenderボタンで描画します。<br />
+			デバッグにも使い道があるかもしれません。
+			<div>
+				<input type="text" id="m" value="50" />
+				<input type="button" value="update" id="updateBtn" />
+				<input type="button" value="render" id="renderBtn" />
+				<input type="button" value="update &amp; render" id="urBtn" />
+			</div>
+		</div>
+	</div>
+</body>
+</html>

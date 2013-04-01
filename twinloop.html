@@ -7,7 +7,7 @@
 <script type="text/javascript" src="js/jgengine.js"></script>
 <script type="text/javascript">
 window.onload = function() {
-	var game = new jgengine.TwinLoopGame(480, 480, 30);
+	var game = new jgengine.TwinLoopGame(480, 480);
 	for (var i=0; i<50; i++) {
 		var shape = new Shape(48, 48);
 		shape.moveTo(240, 240);
@@ -27,9 +27,6 @@ window.onload = function() {
 			技術的に、メインループはsetTimeoutによって管理され、レンダリング用ループはrequestAnimationFrameによって管理されます。<br/>
 			元々jgame.jsはこの方式で行われていましたが、requestAnimationFrameより高頻度で更新する必要性は無いと判断して、デフォルトのGameエンジンでは単一ループでの管理にしていますが、場合によってはこちらの方が滑らかに動作するかもしれません。<br/>
 			setTimeoutのウェイトはwaitフィールドで指定可能ですが、通常はウェイトなしの最高速度で処理するため、重いゲームでない限りこちらの方が処理の実行単位がより細かくなるでしょう。マシンの負荷もそれだけ上昇します。
-		</div>
-		<div id="body">
-			<div id="game-here"></div>
 		</div>
 	</div>
 </body>

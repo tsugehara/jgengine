@@ -36,9 +36,7 @@ var jgengine;
                             fps_stack = [];
                         }
                     }
-                    if(_this.enterFrame) {
-                        _this.enterFrame.fire();
-                    }
+                    _this.raiseInputEvent();
                     _this.update.fire(t - _this.tick);
                     _this.tick = t;
                     if(_this.render) {
@@ -73,12 +71,10 @@ var jgengine;
                 if(_this.tick > (t + 10000) || (_this.tick + 10000) < t) {
                     _this.tick = t - 1;
                     _this.renderTick = t - _this.targetFps;
-                    if(_this.enterFrame) {
-                        _this.enterFrameTick = t - 1;
-                    }
                     _this.refresh();
                 }
                 if(_this.tick < t) {
+                    _this.raiseInputEvent();
                     _this.update.fire(t - _this.tick);
                     _this.tick = t;
                 }
@@ -92,15 +88,6 @@ var jgengine;
             var _render = function (t) {
                 if(t === undefined) {
                     t = Date.now ? Date.now() : new Date().getTime();
-                }
-                if(_this.enterFrame) {
-                    if(!_this.enterFrameTick) {
-                        _this.enterFrameTick = t - 1;
-                    }
-                    while((_this.enterFrameTick + 16) < t) {
-                        _this.enterFrameTick += 16;
-                        _this.enterFrame.fire();
-                    }
                 }
                 if(_this.targetFps == 0 || _this.renderTick <= t) {
                     if(_this.render) {
@@ -131,4 +118,312 @@ var jgengine;
         return TwinLoopGame;
     })(Game);
     jgengine.TwinLoopGame = TwinLoopGame;    
+    var StaticGame = (function (_super) {
+        __extends(StaticGame, _super);
+        function StaticGame() {
+            _super.apply(this, arguments);
+
+        }
+        StaticGame.prototype.manualRender = function () {
+            if(this.render) {
+                this.render.fire();
+            }
+            this.renderer.render();
+        };
+        StaticGame.prototype.manualUpdate = function (t) {
+            this.tick += t;
+            this.raiseInputEvent();
+            this.update.fire(t);
+            for(var i = 0; i < this.timers.length; i++) {
+                this.timers[i].tryFire(this.tick);
+            }
+        };
+        StaticGame.prototype.main = function () {
+            this.tick = 0;
+        };
+        return StaticGame;
+    })(Game);
+    jgengine.StaticGame = StaticGame;    
+    var ManualGame = (function (_super) {
+        __extends(ManualGame, _super);
+        function ManualGame() {
+            _super.apply(this, arguments);
+
+        }
+        ManualGame.prototype.keyboardHandler = function () {
+        };
+        ManualGame.prototype.pointHandler = function () {
+        };
+        return ManualGame;
+    })(StaticGame);
+    jgengine.ManualGame = ManualGame;    
+    var ReplayGame = (function (_super) {
+        __extends(ReplayGame, _super);
+        function ReplayGame() {
+            _super.apply(this, arguments);
+
+        }
+        ReplayGame.prototype.keyboardHandler = function () {
+        };
+        ReplayGame.prototype.pointHandler = function () {
+        };
+        ReplayGame.prototype.changeScene = function (scene, effect, endOldScene) {
+            this.sceneIndex++;
+            _super.prototype.changeScene.call(this, scene, effect, endOldScene);
+        };
+        ReplayGame.prototype.endScene = function (effect) {
+            this.sceneIndex++;
+            _super.prototype.endScene.call(this, effect);
+        };
+        ReplayGame.prototype.main = function () {
+            this.sceneIndex = 1;
+            _super.prototype.main.call(this);
+        };
+        return ReplayGame;
+    })(ManualGame);
+    jgengine.ReplayGame = ReplayGame;    
+    var LoggingGame = (function (_super) {
+        __extends(LoggingGame, _super);
+        function LoggingGame() {
+            _super.apply(this, arguments);
+
+        }
+        LoggingGame.prototype.changeScene = function (scene, effect, endOldScene) {
+            this.sceneIndex++;
+            this.log.fastFire({
+                type: endOldScene ? 3 : 1,
+                t: this.sceneIndex,
+                events: []
+            });
+            _super.prototype.changeScene.call(this, scene, effect, endOldScene);
+        };
+        LoggingGame.prototype.endScene = function (effect) {
+            this.sceneIndex++;
+            this.log.fastFire({
+                type: 2,
+                t: this.sceneIndex,
+                events: []
+            });
+            _super.prototype.endScene.call(this, effect);
+        };
+        LoggingGame.prototype.main = function () {
+            var _this = this;
+            this.log = new Trigger();
+            var fps_stack = new Array();
+            this.sceneIndex = 1;
+            var _main = function (t) {
+                if(t === undefined) {
+                    t = Date.now ? Date.now() : new Date().getTime();
+                }
+                if(_this.tick > (t + 10000) || (_this.tick + 10000) < t) {
+                    _this.tick = t - 1;
+                    _this.renderTick = t - _this.targetFps;
+                    _this.refresh();
+                }
+                if(_this.tick < t) {
+                    var time = t - _this.tick;
+                    _this.log.fastFire({
+                        type: 0,
+                        t: time,
+                        events: _this.eventQueue
+                    });
+                    _this.raiseInputEvent();
+                    _this.update.fire(time);
+                    _this.tick = t;
+                }
+                for(var i = 0; i < _this.timers.length; i++) {
+                    _this.timers[i].tryFire(t);
+                }
+                if(_this.targetFps == 0 || _this.renderTick <= t) {
+                    if(_this.render) {
+                        _this.render.fire();
+                    }
+                    _this.renderer.render();
+                    if(_this.targetFps) {
+                        _this.renderTick = t + _this.targetFps;
+                    }
+                    if(_this.fps) {
+                        if(fps_stack.length == 19) {
+                            _this.fps.innerHTML = Math.round(20000 / (t - fps_stack[0])).toString();
+                            fps_stack = [];
+                        } else {
+                            fps_stack.push(t);
+                        }
+                    }
+                }
+                if(!_this._exit) {
+                    window.requestAnimationFrame(_main);
+                }
+            };
+            this.tick = 0;
+            this.renderTick = 0;
+            window.requestAnimationFrame(_main);
+        };
+        return LoggingGame;
+    })(Game);
+    jgengine.LoggingGame = LoggingGame;    
+    var Serializer = (function () {
+        function Serializer(game) {
+            this.game = game;
+        }
+        Serializer.prototype.serialize = function (log) {
+            throw "not implemented";
+        };
+        Serializer.prototype.deserialize = function (data) {
+            throw "not implemented";
+        };
+        return Serializer;
+    })();
+    jgengine.Serializer = Serializer;    
+    var BinarySerializer = (function (_super) {
+        __extends(BinarySerializer, _super);
+        function BinarySerializer(game) {
+                _super.call(this, game);
+            this.actionMap = {
+            };
+            this.actionMap[InputEventAction.Down] = 4;
+            this.actionMap[InputEventAction.Move] = 8;
+            this.actionMap[InputEventAction.Up] = 16;
+            this.actionMapReverse = {
+            };
+            this.actionMapReverse[4] = InputEventAction.Down;
+            this.actionMapReverse[8] = InputEventAction.Move;
+            this.actionMapReverse[16] = InputEventAction.Up;
+        }
+        BinarySerializer.prototype.writeDouble = function (buffer, offset, val) {
+            var view = new Uint8Array(buffer, offset, 8);
+            var sign = val < 0;
+            sign && (val *= -1);
+            var exp = ((Math.log(val) / Math.LN2) + 1023) | 0;
+            var frac = val * Math.pow(2, 52 + 1023 - exp);
+            var low = frac & 4294967295;
+            sign && (exp |= 2048);
+            var high = ((frac / 4294967296) & 1048575) | (exp << 20);
+            view.set([
+                high >> 24, 
+                high >> 16, 
+                high >> 8, 
+                high, 
+                low >> 24, 
+                low >> 16, 
+                low >> 8, 
+                low
+            ]);
+        };
+        BinarySerializer.prototype.readDouble = function (buffer, offset) {
+            var view = new Uint8Array(buffer, offset, 8);
+            var num = view[0] * 16777216 + (view[1] << 16) + (view[2] << 8) + view[3];
+            var sign = num > 2147483647;
+            var exp = (num >> 20) & 2047;
+            var frac = num & 1048575;
+            if(!num || num === 2147483648) {
+                return 0;
+            }
+            if(exp === 2047) {
+                return frac ? NaN : Infinity;
+            }
+            var num = view[4] * 16777216 + (view[5] << 16) + (view[6] << 8) + view[7];
+            return (sign ? -1 : 1) * ((frac | 1048576) * Math.pow(2, exp - 1023 - 20) + num * Math.pow(2, exp - 1023 - 52));
+        };
+        BinarySerializer.prototype.serialize = function (log) {
+            var ret;
+            var s;
+            var meta;
+            if(!log.events.length) {
+                ret = new ArrayBuffer(12);
+                s = new Uint16Array(ret, 0, 1);
+                s[0] = 12;
+                meta = new Uint8Array(ret, 2, 2);
+                meta[0] = log.type;
+                this.writeDouble(ret, 4, log.t);
+                return ret;
+            }
+            var size = 12;
+            for(var i = 0; i < log.events.length; i++) {
+                size += (log.events[i].type == InputEventType.Keyboard) ? 8 : 20;
+            }
+            ret = new ArrayBuffer(size);
+            s = new Uint16Array(ret, 0, 1);
+            s[0] = size;
+            this.writeDouble(ret, 4, log.t);
+            var offset = 12;
+            for(var i = 0; i < log.events.length; i++) {
+                var e = log.events[i];
+                var et = new Uint32Array(ret, offset, 1);
+                if(e.type == InputEventType.Keyboard) {
+                    et[0] = 1 | this.actionMap[e.action];
+                    var key = new Uint32Array(ret, offset + 4, 1);
+                    key[0] = e.param.keyCode;
+                    offset += 8;
+                } else {
+                    et[0] = 2 | this.actionMap[e.action];
+                    this.writeDouble(ret, offset + 4, (e).point.x);
+                    this.writeDouble(ret, offset + 12, (e).point.y);
+                    offset += 20;
+                }
+            }
+            return ret;
+        };
+        BinarySerializer.prototype.deserialize = function (data) {
+            var len = data.byteLength;
+            var offset = 12;
+            var meta = new Uint8Array(data, 2, 2);
+            var t = this.readDouble(data, 4);
+            var ret = {
+                type: meta[0],
+                t: t,
+                events: []
+            };
+            var game = this.game;
+            while(offset < len) {
+                var e;
+                var et = new Uint32Array(data, offset, 1);
+                if((et[0] & 1) == 1) {
+                    var k = new Uint32Array(data, offset + 4, 1);
+                    var ek = {
+                        keyCode: k[0]
+                    };
+                    e = new InputKeyboardEvent(this.actionMapReverse[et[0] - 1], game.keymap[k[0]], ek);
+                    offset += 8;
+                } else {
+                    var k = new Uint32Array(data, offset + 4, 1);
+                    var action = this.actionMapReverse[et[0] - 2];
+                    var pos = {
+                        x: this.readDouble(data, offset + 4),
+                        y: this.readDouble(data, offset + 12)
+                    };
+                    if(action == InputEventAction.Down) {
+                        var layers = game.scene.getLayerArray();
+                        var layer;
+                        while(layer = layers.pop()) {
+                            if(!layer.pointCapture) {
+                                continue;
+                            }
+                            var dragObj = layer.getEntityByPoint(pos);
+                            if(!dragObj) {
+                                dragObj = layer;
+                            }
+                            e = new InputPointEvent(action, null, dragObj, pos);
+                            game.dragParam = e;
+                            break;
+                        }
+                    } else {
+                        if(!game.dragParam) {
+                            console.error("invalid event. (pointMove: don't have a dragParam)");
+                            continue;
+                        }
+                        e = new InputPointEvent(action, null, game.dragParam.entity, pos);
+                        if(action == InputEventAction.Up) {
+                            game.dragParam = null;
+                        }
+                    }
+                    offset += 20;
+                }
+                ret.events.push(e);
+            }
+            return ret;
+        };
+        return BinarySerializer;
+    })(Serializer);
+    jgengine.BinarySerializer = BinarySerializer;    
 })(jgengine || (jgengine = {}));
