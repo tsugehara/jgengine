@@ -44,9 +44,8 @@ function play() {
 					//読み飛ばす
 					console.log("skipt scene to scene synchronized..."+player.sceneIndex+":"+logScene);
 				} else {
-					for (var i=0; i<e.events.length; i++) {
+					for (var i=0; i<e.events.length; i++) 
 						player.eventQueue.push(e.events[i]);
-					}
 					player.manualUpdate(e.t)
 					player.manualRender();
 				}
@@ -91,7 +90,8 @@ window.onload = function() {
 	<div id="container">
 		<div id="menu">
 			<div>
-				この例ではゲームのプレー状況を記録し、再生ボタンにて再生します。
+				この例ではゲームのプレー状況を記録し、再生ボタンにて再生します。<br/>
+				※同時再生は出来ません。
 			</div>
 			<div>
 				<input type="button" value="再生" onclick="play()" />

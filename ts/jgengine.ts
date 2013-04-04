@@ -23,8 +23,9 @@ module jgengine {
 					this.refresh();
 				}
 
+				var time = t - this.tick;
 				for (var i=0; i<this.timers.length; i++)
-					this.timers[i].tryFire(t);
+					this.timers[i].tryFire(time);
 
 				if ((this.renderTick+this.targetFps) <= t) {
 					if (this.fps) {
@@ -69,14 +70,15 @@ module jgengine {
 					this.refresh();
 				}
 
+				var time = t - this.tick;
 				if (this.tick < t) {
 					this.raiseInputEvent();
-					this.update.fire(t - this.tick);
+					this.update.fire(time);
 					this.tick = t;
 				}
 
 				for (var i=0; i<this.timers.length; i++)
-					this.timers[i].tryFire(t);
+					this.timers[i].tryFire(time);
 
 				if (! this._exit)
 					window.setTimeout(_main, this.wait);
@@ -130,7 +132,7 @@ module jgengine {
 			this.update.fire(t);
 
 			for (var i=0; i<this.timers.length; i++)
-				this.timers[i].tryFire(this.tick);
+				this.timers[i].tryFire(t);
 		}
 
 		main() {
@@ -212,8 +214,8 @@ module jgengine {
 					this.refresh();
 				}
 
+				var time = t - this.tick;
 				if (this.tick < t) {
-					var time = t - this.tick;
 					this.log.fastFire({
 						type: 0,
 						t: time,
@@ -225,7 +227,7 @@ module jgengine {
 				}
 
 				for (var i=0; i<this.timers.length; i++)
-					this.timers[i].tryFire(t);
+					this.timers[i].tryFire(time);
 
 				if (this.targetFps == 0 || this.renderTick <= t) {
 					if (this.render)
@@ -341,6 +343,74 @@ module jgengine {
 			             + num * Math.pow(2, exp - 1023 - 52));
 		}
 
+		serializeAll(logs:UpdateLog[]):ArrayBuffer {
+			var len = logs.length;
+			var size = 0;
+			var b = false;
+			var log;
+			for (var i=0; i<len; i++)  {
+				log = logs[i];
+				if (! log.events.length) {
+					if (b) {
+						logs[i-1].t += log.t;
+					} else {
+						b = true;
+						size += 12;
+					}
+				} else {
+					b = false;
+					size += 12;
+					for (var j=0; j<log.events.length; j++)
+						size += (log.events[j].type == InputEventType.Keyboard) ? 8 : 20;
+				}
+			}
+
+			var ret = new ArrayBuffer(size);
+			var offset = 0;
+			b = false;
+			for (var i=0; i<len; i++)  {
+				var s:Uint16Array;
+				var meta:Uint8Array;
+				log = logs[i];
+				if (! log.events.length) {
+					if (b)
+						continue;
+
+					b = true;
+				} else {
+					b = false;
+				}
+
+				var sub_size = 12;
+				for (var j=0; j<log.events.length; j++)
+					sub_size += (log.events[j].type == InputEventType.Keyboard) ? 8 : 20;
+
+				s = new Uint16Array(ret, offset, 1);
+				s[0] = sub_size;
+				meta = new Uint8Array(ret, offset+2, 2);
+				meta[0] = log.type;
+				this.writeDouble(ret, offset+4, log.t);
+				offset+=12;
+				for (var j=0; j<log.events.length; j++) {
+					var e = log.events[j];
+					var et = new Uint32Array(ret, offset, 1);
+					if (e.type == InputEventType.Keyboard) {
+						et[0] = 1 | this.actionMap[e.action];
+						var key = new Uint32Array(ret, offset+4, 1);
+						key[0] = e.param.keyCode;
+						offset += 8;
+					} else {
+						et[0] = 2 | this.actionMap[e.action];
+						this.writeDouble(ret, offset+4, (<InputPointEvent>e).point.x);
+						this.writeDouble(ret, offset+12, (<InputPointEvent>e).point.y);
+						offset += 20;
+					}
+				}
+			}
+
+			return ret;
+		}
+
 		serialize(log:UpdateLog):ArrayBuffer {
 			var ret:ArrayBuffer;
 			var s:Uint16Array;
@@ -382,6 +452,62 @@ module jgengine {
 			return ret;
 		}
 
+		deserializeAll(data:ArrayBuffer):any {
+			var len1 = data.byteLength;
+			var ary = [];
+			var game = this.game;
+			var offset = 0;
+
+			while (offset < len1) {
+				var lens = new Uint16Array(data, offset, 1);
+				var len = offset+lens[0];
+				if (lens[0] < 12 || len > len1)
+					break;
+				var meta = new Uint8Array(data, offset+2, 2);
+				var t = this.readDouble(data, offset+4);
+				offset += 12;
+				var row = {
+					type: meta[0],
+					t: t,
+					events: []
+				}
+				while (offset < len) {
+					var e;
+					var et = new Uint32Array(data, offset, 1);
+					if ((et[0] & 1) == 1) {
+						var k = new Uint32Array(data, offset+4, 1);
+						var ek = {
+							keyCode: k[0]
+						}
+						e = new InputKeyboardEvent(
+							this.actionMapReverse[et[0]-1],
+							game.keymap[k[0]],
+							ek
+						);
+						offset += 8;
+					} else {
+						var pos = {
+							x: this.readDouble(data, offset+4),
+							y: this.readDouble(data, offset+12)
+						}
+						e = new InputPointEvent(
+							this.actionMapReverse[et[0]-2],
+							null,
+							pos
+						);
+						offset += 20;
+					}
+					row.events.push(e);
+				}
+				ary.push(row);
+			}
+			var ret = {
+				data: ary,
+				seek: offset
+			}
+			return ret;
+		}
+
 		deserialize(data:ArrayBuffer):UpdateLog {
 			var len = data.byteLength;
 			var offset = 12;
@@ -408,45 +534,15 @@ module jgengine {
 					);
 					offset += 8;
 				} else {
-					var k = new Uint32Array(data, offset+4, 1);
-					var action = this.actionMapReverse[et[0]-2];
 					var pos = {
 						x: this.readDouble(data, offset+4),
 						y: this.readDouble(data, offset+12)
 					}
-					if (action == InputEventAction.Down) {
-						var layers = game.scene.getLayerArray();
-						var layer;
-						while (layer = layers.pop()) {
-							if (! layer.pointCapture)
-								continue;
-
-							var dragObj = layer.getEntityByPoint(pos);
-							if (! dragObj)
-								dragObj = layer;
-							e = new InputPointEvent(
-								action,
-								null,
-								dragObj,
-								pos
-							);
-							game.dragParam = e;
-							break;
-						}
-					} else {
-						if (! game.dragParam) {
-							console.error("invalid event. (pointMove: don't have a dragParam)")
-							continue;
-						}
-						e = new InputPointEvent(
-							action,
-							null,
-							game.dragParam.entity,
-							pos
-						);
-						if (action == InputEventAction.Up)
-							game.dragParam = null;
-					}
+					e = new InputPointEvent(
+						this.actionMapReverse[et[0]-2],
+						null,
+						pos
+					);
 					offset += 20;
 				}
 				ret.events.push(e);

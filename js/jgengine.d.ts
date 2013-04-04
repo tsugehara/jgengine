@@ -49,7 +49,9 @@ module jgengine {
         constructor(game: Game);
         public writeDouble(buffer: ArrayBuffer, offset: number, val: number): void;
         public readDouble(buffer: ArrayBuffer, offset: number): number;
+        public serializeAll(logs: UpdateLog[]): ArrayBuffer;
         public serialize(log: UpdateLog): ArrayBuffer;
+        public deserializeAll(data: ArrayBuffer): any;
         public deserialize(data: ArrayBuffer): UpdateLog;
     }
 }

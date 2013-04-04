@@ -2362,14 +2362,16 @@ var InputKeyboardEvent = (function (_super) {
 })(InputEvent);
 var InputPointEvent = (function (_super) {
     __extends(InputPointEvent, _super);
-    function InputPointEvent(action, e, entity, point) {
+    function InputPointEvent(action, e, point) {
         _super.call(this, InputEventType.Point, action, e);
+        this.point = point;
+    }
+    InputPointEvent.prototype.set = function (entity) {
         var entityOffset = entity.offset();
         this.entity = entity;
-        this.point = point;
         this.x = this.point.x - entityOffset.x;
         this.y = this.point.y - entityOffset.y;
-    }
+    };
     return InputPointEvent;
 })(InputEvent);
 var Renderer = (function () {
@@ -2733,18 +2735,19 @@ var BufferedRenderer = (function (_super) {
     return BufferedRenderer;
 })(Renderer);
 var GameTimer = (function () {
-    function GameTimer(wait, now) {
+    function GameTimer(wait) {
         this.wait = wait;
-        this.tick = now + this.wait;
+        this.tick = 0;
         this.trigger = new Trigger();
     }
     GameTimer.prototype.tryFire = function (t) {
-        if(t >= this.tick) {
+        this.tick += t;
+        if(this.wait <= this.tick) {
             this.fire(t);
         }
     };
     GameTimer.prototype.fire = function (t) {
-        this.tick = t + this.wait;
+        this.tick = 0;
         this.trigger.fastFire(t);
     };
     return GameTimer;
@@ -2878,87 +2881,52 @@ var Game = (function () {
         };
     };
     Game.prototype.onmousedown = function (e) {
-        var layers = this.scene.getLayerArray();
-        var layer;
-        var offset = this.getOffsetByEvent(e);
-        while(layer = layers.pop()) {
-            if(!layer.pointCapture) {
-                continue;
-            }
-            var dragObj = layer.getEntityByPoint(offset);
-            if(!dragObj) {
-                dragObj = layer;
-            }
-            this.dragParam = new InputPointEvent(InputEventAction.Down, e, dragObj, offset);
-            this.eventQueue.push(this.dragParam);
-            break;
-        }
+        this.isPointDown = true;
+        this.eventQueue.push(new InputPointEvent(InputEventAction.Down, e, this.getOffsetByEvent(e)));
         e.preventDefault();
     };
     Game.prototype.ontouchstart = function (e) {
-        var layers = this.scene.getLayerArray();
-        var layer;
         var touches = e.changedTouches;
+        this.isPointDown = true;
         for(var i = 0, l = touches.length; i < l; i++) {
-            var touch = touches[i];
-            var offset = this.getOffsetByEvent(touch);
-            while(layer = layers.pop()) {
-                if(!layer.pointCapture) {
-                    continue;
-                }
-                var dragObj = layer.getEntityByPoint(offset);
-                if(!dragObj) {
-                    dragObj = layer;
-                }
-                this.dragParam = new InputPointEvent(InputEventAction.Down, touch, dragObj, offset);
-                this.eventQueue.push(this.dragParam);
-                break;
-            }
+            this.eventQueue.push(new InputPointEvent(InputEventAction.Down, touches[i], this.getOffsetByEvent(touches[i])));
         }
         e.preventDefault();
     };
     Game.prototype.onmousemove = function (e) {
-        if(!this.dragParam) {
+        if(!this.isPointDown) {
             return;
         }
-        var param = new InputPointEvent(InputEventAction.Move, e, this.dragParam.entity, this.getOffsetByEvent(e));
-        this.eventQueue.push(param);
+        this.eventQueue.push(new InputPointEvent(InputEventAction.Move, e, this.getOffsetByEvent(e)));
         e.preventDefault();
     };
     Game.prototype.ontouchmove = function (e) {
-        if(!this.dragParam) {
+        if(!this.isPointDown) {
             return;
         }
         var touches = e.changedTouches;
         for(var i = 0, l = touches.length; i < l; i++) {
-            var touch = touches[i];
-            var offset = this.getOffsetByEvent(touch);
-            var param = new InputPointEvent(InputEventAction.Move, touch, this.dragParam.entity, offset);
-            this.eventQueue.push(param);
+            this.eventQueue.push(new InputPointEvent(InputEventAction.Move, touches[i], this.getOffsetByEvent(touches[i])));
         }
         e.preventDefault();
     };
     Game.prototype.onmouseup = function (e) {
-        if(!this.dragParam) {
+        if(!this.isPointDown) {
             return;
         }
-        var param = new InputPointEvent(InputEventAction.Up, e, this.dragParam.entity, this.getOffsetByEvent(e));
-        this.eventQueue.push(param);
-        this.dragParam = null;
+        this.eventQueue.push(new InputPointEvent(InputEventAction.Up, e, this.getOffsetByEvent(e)));
+        this.isPointDown = false;
         e.preventDefault();
     };
     Game.prototype.ontouchend = function (e) {
-        if(!this.dragParam) {
+        if(!this.isPointDown) {
             return;
         }
         var touches = e.changedTouches;
         for(var i = 0, l = touches.length; i < l; i++) {
-            var touch = touches[i];
-            var offset = this.getOffsetByEvent(touch);
-            var param = new InputPointEvent(InputEventAction.Up, touch, this.dragParam.entity, offset);
-            this.eventQueue.push(param);
+            this.eventQueue.push(new InputPointEvent(InputEventAction.Up, touches[i], this.getOffsetByEvent(touches[i])));
         }
-        this.dragParam = null;
+        this.isPointDown = false;
         e.preventDefault();
     };
     Game.prototype.pointHandler = function () {
@@ -3006,7 +2974,7 @@ var Game = (function () {
             }
         }
         if(timer == null) {
-            timer = new GameTimer(wait, this.tick === undefined ? 0 : this.tick);
+            timer = new GameTimer(wait);
             this.timers.push(timer);
         }
         timer.trigger.handle(owner, handler);
@@ -3119,6 +3087,23 @@ var Game = (function () {
         this.renderer.render();
         this._exit = true;
     };
+    Game.prototype.setPointingEntity = function (param) {
+        var layers = this.scene.getLayerArray();
+        var layer;
+        var offset = param.point;
+        while(layer = layers.pop()) {
+            if(!layer.pointCapture) {
+                continue;
+            }
+            var dragObj = layer.getEntityByPoint(offset);
+            if(!dragObj) {
+                dragObj = layer;
+            }
+            param.set(dragObj);
+            this.dragParam = param;
+            break;
+        }
+    };
     Game.prototype.raiseInputEvent = function () {
         var e;
         while(e = this.eventQueue.shift()) {
@@ -3129,6 +3114,11 @@ var Game = (function () {
                 }
                 this[n].fire(e);
             } else {
+                if(e.action == InputEventAction.Down) {
+                    this.setPointingEntity(e);
+                } else {
+                    (e).set(this.dragParam.entity);
+                }
                 if((e).entity[n]) {
                     (e).entity[n].fire(e);
                 }
@@ -3151,13 +3141,14 @@ var Game = (function () {
                 _this.renderTick = t - _this.targetFps;
                 _this.refresh();
             }
+            var time = t - _this.tick;
             if(_this.tick < t) {
                 _this.raiseInputEvent();
-                _this.update.fire(t - _this.tick);
+                _this.update.fire(time);
                 _this.tick = t;
             }
             for(var i = 0; i < _this.timers.length; i++) {
-                _this.timers[i].tryFire(t);
+                _this.timers[i].tryFire(time);
             }
             if(_this.targetFps == 0 || _this.renderTick <= t) {
                 if(_this.render) {
