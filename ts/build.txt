@@ -1,5 +1,12 @@
 ../../jgame.js/lib/webaudio.d.ts
 ../../jgame.js/lib/jgame.d.ts
-jgengine.ts
+FrameGame.ts
+TwinLoopGame.ts
+StaticGame.ts
+ManualGame.ts
+LoggingGame.ts
+ReplayGame.ts
+Serializer.ts
+BinarySerializer.ts
 --out ../js/jgengine.js
 --declaration

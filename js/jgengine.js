@@ -11,7 +11,7 @@ var jgengine;
                 _super.call(this, width, height);
             this._fps = fps;
             this.targetFps = Math.floor(1000 / this._fps);
-            Timeline.prototype.isFrameBased = true;
+            jg.Timeline.prototype.isFrameBased = true;
         }
         FrameGame.prototype.main = function () {
             var _this = this;
@@ -55,8 +55,11 @@ var jgengine;
             window.requestAnimationFrame(_main);
         };
         return FrameGame;
-    })(Game);
+    })(jg.Game);
     jgengine.FrameGame = FrameGame;    
+})(jgengine || (jgengine = {}));
+var jgengine;
+(function (jgengine) {
     var TwinLoopGame = (function (_super) {
         __extends(TwinLoopGame, _super);
         function TwinLoopGame() {
@@ -118,8 +121,11 @@ var jgengine;
             window.requestAnimationFrame(_render);
         };
         return TwinLoopGame;
-    })(Game);
+    })(jg.Game);
     jgengine.TwinLoopGame = TwinLoopGame;    
+})(jgengine || (jgengine = {}));
+var jgengine;
+(function (jgengine) {
     var StaticGame = (function (_super) {
         __extends(StaticGame, _super);
         function StaticGame() {
@@ -144,8 +150,11 @@ var jgengine;
             this.tick = 0;
         };
         return StaticGame;
-    })(Game);
+    })(jg.Game);
     jgengine.StaticGame = StaticGame;    
+})(jgengine || (jgengine = {}));
+var jgengine;
+(function (jgengine) {
     var ManualGame = (function (_super) {
         __extends(ManualGame, _super);
         function ManualGame() {
@@ -157,33 +166,11 @@ var jgengine;
         ManualGame.prototype.pointHandler = function () {
         };
         return ManualGame;
-    })(StaticGame);
+    })(jgengine.StaticGame);
     jgengine.ManualGame = ManualGame;    
-    var ReplayGame = (function (_super) {
-        __extends(ReplayGame, _super);
-        function ReplayGame() {
-            _super.apply(this, arguments);
-
-        }
-        ReplayGame.prototype.keyboardHandler = function () {
-        };
-        ReplayGame.prototype.pointHandler = function () {
-        };
-        ReplayGame.prototype.changeScene = function (scene, effect, endOldScene) {
-            this.sceneIndex++;
-            _super.prototype.changeScene.call(this, scene, effect, endOldScene);
-        };
-        ReplayGame.prototype.endScene = function (effect) {
-            this.sceneIndex++;
-            _super.prototype.endScene.call(this, effect);
-        };
-        ReplayGame.prototype.main = function () {
-            this.sceneIndex = 1;
-            _super.prototype.main.call(this);
-        };
-        return ReplayGame;
-    })(ManualGame);
-    jgengine.ReplayGame = ReplayGame;    
+})(jgengine || (jgengine = {}));
+var jgengine;
+(function (jgengine) {
     var LoggingGame = (function (_super) {
         __extends(LoggingGame, _super);
         function LoggingGame() {
@@ -210,7 +197,7 @@ var jgengine;
         };
         LoggingGame.prototype.main = function () {
             var _this = this;
-            this.log = new Trigger();
+            this.log = new jg.Trigger();
             var fps_stack = new Array();
             this.sceneIndex = 1;
             var _main = function (t) {
@@ -262,8 +249,39 @@ var jgengine;
             window.requestAnimationFrame(_main);
         };
         return LoggingGame;
-    })(Game);
+    })(jg.Game);
     jgengine.LoggingGame = LoggingGame;    
+})(jgengine || (jgengine = {}));
+var jgengine;
+(function (jgengine) {
+    var ReplayGame = (function (_super) {
+        __extends(ReplayGame, _super);
+        function ReplayGame() {
+            _super.apply(this, arguments);
+
+        }
+        ReplayGame.prototype.keyboardHandler = function () {
+        };
+        ReplayGame.prototype.pointHandler = function () {
+        };
+        ReplayGame.prototype.changeScene = function (scene, effect, endOldScene) {
+            this.sceneIndex++;
+            _super.prototype.changeScene.call(this, scene, effect, endOldScene);
+        };
+        ReplayGame.prototype.endScene = function (effect) {
+            this.sceneIndex++;
+            _super.prototype.endScene.call(this, effect);
+        };
+        ReplayGame.prototype.main = function () {
+            this.sceneIndex = 1;
+            _super.prototype.main.call(this);
+        };
+        return ReplayGame;
+    })(jgengine.ManualGame);
+    jgengine.ReplayGame = ReplayGame;    
+})(jgengine || (jgengine = {}));
+var jgengine;
+(function (jgengine) {
     var Serializer = (function () {
         function Serializer(game) {
             this.game = game;
@@ -277,20 +295,23 @@ var jgengine;
         return Serializer;
     })();
     jgengine.Serializer = Serializer;    
+})(jgengine || (jgengine = {}));
+var jgengine;
+(function (jgengine) {
     var BinarySerializer = (function (_super) {
         __extends(BinarySerializer, _super);
         function BinarySerializer(game) {
                 _super.call(this, game);
             this.actionMap = {
             };
-            this.actionMap[InputEventAction.Down] = 4;
-            this.actionMap[InputEventAction.Move] = 8;
-            this.actionMap[InputEventAction.Up] = 16;
+            this.actionMap[jg.InputEventAction.Down] = 4;
+            this.actionMap[jg.InputEventAction.Move] = 8;
+            this.actionMap[jg.InputEventAction.Up] = 16;
             this.actionMapReverse = {
             };
-            this.actionMapReverse[4] = InputEventAction.Down;
-            this.actionMapReverse[8] = InputEventAction.Move;
-            this.actionMapReverse[16] = InputEventAction.Up;
+            this.actionMapReverse[4] = jg.InputEventAction.Down;
+            this.actionMapReverse[8] = jg.InputEventAction.Move;
+            this.actionMapReverse[16] = jg.InputEventAction.Up;
         }
         BinarySerializer.prototype.writeDouble = function (buffer, offset, val) {
             var view = new Uint8Array(buffer, offset, 8);
@@ -345,7 +366,7 @@ var jgengine;
                     b = false;
                     size += 12;
                     for(var j = 0; j < log.events.length; j++) {
-                        size += (log.events[j].type == InputEventType.Keyboard) ? 8 : 20;
+                        size += (log.events[j].type == jg.InputEventType.Keyboard) ? 8 : 20;
                     }
                 }
             }
@@ -366,7 +387,7 @@ var jgengine;
                 }
                 var sub_size = 12;
                 for(var j = 0; j < log.events.length; j++) {
-                    sub_size += (log.events[j].type == InputEventType.Keyboard) ? 8 : 20;
+                    sub_size += (log.events[j].type == jg.InputEventType.Keyboard) ? 8 : 20;
                 }
                 s = new Uint16Array(ret, offset, 1);
                 s[0] = sub_size;
@@ -377,7 +398,7 @@ var jgengine;
                 for(var j = 0; j < log.events.length; j++) {
                     var e = log.events[j];
                     var et = new Uint32Array(ret, offset, 1);
-                    if(e.type == InputEventType.Keyboard) {
+                    if(e.type == jg.InputEventType.Keyboard) {
                         et[0] = 1 | this.actionMap[e.action];
                         var key = new Uint32Array(ret, offset + 4, 1);
                         key[0] = e.param.keyCode;
@@ -407,7 +428,7 @@ var jgengine;
             }
             var size = 12;
             for(var i = 0; i < log.events.length; i++) {
-                size += (log.events[i].type == InputEventType.Keyboard) ? 8 : 20;
+                size += (log.events[i].type == jg.InputEventType.Keyboard) ? 8 : 20;
             }
             ret = new ArrayBuffer(size);
             s = new Uint16Array(ret, 0, 1);
@@ -417,7 +438,7 @@ var jgengine;
             for(var i = 0; i < log.events.length; i++) {
                 var e = log.events[i];
                 var et = new Uint32Array(ret, offset, 1);
-                if(e.type == InputEventType.Keyboard) {
+                if(e.type == jg.InputEventType.Keyboard) {
                     et[0] = 1 | this.actionMap[e.action];
                     var key = new Uint32Array(ret, offset + 4, 1);
                     key[0] = e.param.keyCode;
@@ -458,14 +479,14 @@ var jgengine;
                         var ek = {
                             keyCode: k[0]
                         };
-                        e = new InputKeyboardEvent(this.actionMapReverse[et[0] - 1], game.keymap[k[0]], ek);
+                        e = new jg.InputKeyboardEvent(this.actionMapReverse[et[0] - 1], game.keymap[k[0]], ek);
                         offset += 8;
                     } else {
                         var pos = {
                             x: this.readDouble(data, offset + 4),
                             y: this.readDouble(data, offset + 12)
                         };
-                        e = new InputPointEvent(this.actionMapReverse[et[0] - 2], null, pos);
+                        e = new jg.InputPointEvent(this.actionMapReverse[et[0] - 2], null, pos);
                         offset += 20;
                     }
                     row.events.push(e);
@@ -497,14 +518,14 @@ var jgengine;
                     var ek = {
                         keyCode: k[0]
                     };
-                    e = new InputKeyboardEvent(this.actionMapReverse[et[0] - 1], game.keymap[k[0]], ek);
+                    e = new jg.InputKeyboardEvent(this.actionMapReverse[et[0] - 1], game.keymap[k[0]], ek);
                     offset += 8;
                 } else {
                     var pos = {
                         x: this.readDouble(data, offset + 4),
                         y: this.readDouble(data, offset + 12)
                     };
-                    e = new InputPointEvent(this.actionMapReverse[et[0] - 2], null, pos);
+                    e = new jg.InputPointEvent(this.actionMapReverse[et[0] - 2], null, pos);
                     offset += 20;
                 }
                 ret.events.push(e);
@@ -512,6 +533,6 @@ var jgengine;
             return ret;
         };
         return BinarySerializer;
-    })(Serializer);
+    })(jgengine.Serializer);
     jgengine.BinarySerializer = BinarySerializer;    
 })(jgengine || (jgengine = {}));

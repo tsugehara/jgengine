@@ -6,6 +6,7 @@
 <script type="text/javascript" src="js/jgame.js"></script>
 <script type="text/javascript" src="js/jgengine.js"></script>
 <script type="text/javascript">
+jg.globalize();
 window.onload = function() {
 	var game = new jgengine.TwinLoopGame(480, 480);
 	for (var i=0; i<50; i++) {
@@ -20,7 +21,7 @@ window.onload = function() {
 </script>
 </head>
 <body>
-	<div id="fps_show"></div>
+	<div id="fps_show">&nbsp;</div>
 	<div id="container">
 		<div id="menu">
 			TwinLoopGameは、ゲームのメインループとレンダリング用のループを別々で管理しているゲームエンジンです。<br/>

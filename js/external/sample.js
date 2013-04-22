@@ -7,10 +7,9 @@ var __extends = this.__extends || function (d, b) {
 var Enemy = (function (_super) {
     __extends(Enemy, _super);
     function Enemy() {
-        _super.call(this, 32, 32, game.r("eye"));
-        this.frame = [
-            20
-        ];
+        _super.call(this, game.r("eye"), 32, 32);
+        this.srcX = 32;
+        this.srcY = 160;
         if(game.random(0, 9) < 1) {
             this.homingShot = true;
         }
@@ -31,20 +30,20 @@ var Enemy = (function (_super) {
         return s;
     };
     return Enemy;
-})(Sprite);
+})(jg.Sprite);
 var Shot = (function (_super) {
     __extends(Shot, _super);
     function Shot(owner, size, color) {
         if(!size) {
             size = 7;
         }
-        _super.call(this, 16, size, ShapeStyle.Fill, color ? color : "orange");
+        _super.call(this, 16, size, jg.ShapeStyle.Fill, color ? color : "orange");
         this.owner = owner;
         this.speed = 80;
         this.moveTo(owner.x, owner.y + owner.height / 2 - size / 2);
     }
     return Shot;
-})(Shape);
+})(jg.Shape);
 var ShootingScene = (function (_super) {
     __extends(ShootingScene, _super);
     function ShootingScene(game) {
@@ -55,7 +54,7 @@ var ShootingScene = (function (_super) {
         this.scrollSpeed = 80;
         this.directions = {
         };
-        this.limit = new Rectangle(0, 0, 0, game.height - 32);
+        this.limit = new jg.Rectangle(0, 0, 0, game.height - 32);
         this.score = 0;
     }
     ShootingScene.prototype.start = function () {
@@ -71,32 +70,31 @@ var ShootingScene = (function (_super) {
         this.game.addTimer(500, this, this.timer);
         this.game.addTimer(200, this, this.timer2);
         this.game.setBgColor(0, 0, 0, 255);
-        this.my = new Sprite(32, 32, game.r("eye"));
-        this.my.frame = [
-            10
-        ];
+        this.my = new jg.Sprite(game.r("eye"), 32, 32);
+        this.my.srcX = 96;
+        this.my.srcY = 64;
         this.my.moveTo(0, 240);
         this.append(this.my);
         this.power = 0;
     };
     ShootingScene.prototype.touchdown = function (e) {
-        this.move = JGUtil.getMovePoint(e, this.my, 4, this.speed);
+        this.move = jg.JGUtil.getMovePoint(e, this.my, 4, this.speed);
     };
     ShootingScene.prototype.touchup = function (e) {
         delete this.move;
     };
     ShootingScene.prototype.keydown = function (e) {
-        if(e.key == Keytype.Left || e.key == Keytype.Right || e.key == Keytype.Up || e.key == Keytype.Down) {
+        if(e.key == jg.Keytype.Left || e.key == jg.Keytype.Right || e.key == jg.Keytype.Up || e.key == jg.Keytype.Down) {
             this.directions[e.key] = true;
         } else {
-            this.directions[Keytype.Enter] = true;
+            this.directions[jg.Keytype.Enter] = true;
         }
     };
     ShootingScene.prototype.keyup = function (e) {
-        if(e.key == Keytype.Left || e.key == Keytype.Right || e.key == Keytype.Up || e.key == Keytype.Down) {
+        if(e.key == jg.Keytype.Left || e.key == jg.Keytype.Right || e.key == jg.Keytype.Up || e.key == jg.Keytype.Down) {
             delete this.directions[e.key];
         } else {
-            delete this.directions[Keytype.Enter];
+            delete this.directions[jg.Keytype.Enter];
         }
     };
     ShootingScene.prototype.scrollBy = function (x, y, layerName) {
@@ -132,7 +130,7 @@ var ShootingScene = (function (_super) {
         $("#score").html((-Math.round(this.root.scroll.x * 0.1) + this.score).toString());
     };
     ShootingScene.prototype.timer2 = function () {
-        if(this.directions[Keytype.Enter]) {
+        if(this.directions[jg.Keytype.Enter]) {
             this.power += 2;
             return;
         }
@@ -165,16 +163,16 @@ var ShootingScene = (function (_super) {
         if(this.move) {
             this.my.moveBy(this.move.x * a, this.move.y * a);
         } else {
-            if(this.directions[Keytype.Up]) {
+            if(this.directions[jg.Keytype.Up]) {
                 this.my.moveBy(0, -this.speed * a);
             }
-            if(this.directions[Keytype.Down]) {
+            if(this.directions[jg.Keytype.Down]) {
                 this.my.moveBy(0, this.speed * a);
             }
-            if(this.directions[Keytype.Left]) {
+            if(this.directions[jg.Keytype.Left]) {
                 this.my.moveBy(-this.speed * a, 0);
             }
-            if(this.directions[Keytype.Right]) {
+            if(this.directions[jg.Keytype.Right]) {
                 this.my.moveBy(this.speed * a, 0);
             }
         }
@@ -221,7 +219,7 @@ var ShootingScene = (function (_super) {
                 } else {
                     s.x -= s.speed * a;
                     if(s.homingShot) {
-                        JGUtil.homingY(s, this.my, 30 / 800, t);
+                        jg.JGUtil.homingY(s, this.my, 30 / 800, t);
                     }
                 }
             }
@@ -261,13 +259,13 @@ var ShootingScene = (function (_super) {
             return;
         }
         this.my.tl().scaleTo(20, 1000).and().fadeOut(1000).then(function () {
-            var label = new Label("GAME OVER", 32, "red");
+            var label = new jg.Label("GAME OVER", 32, "red");
             label.setTextAlign("center");
             label.setTextBaseline("middle");
             label.moveTo((-_this.root.scroll.x) + _this.game.width / 2, _this.game.height / 2);
             _this.append(label);
             _this.updateScore();
-            var label = new Label("ブラウザの更新ボタンで再度遊べます", 12, "red");
+            var label = new jg.Label("ブラウザの更新ボタンで再度遊べます", 12, "red");
             label.setTextAlign("center");
             label.setTextBaseline("middle");
             label.moveTo((-_this.root.scroll.x) + _this.game.width / 2, _this.game.height / 2 + 32);
@@ -292,14 +290,18 @@ var ShootingScene = (function (_super) {
         if(r < 800) {
             var t = this.game.random(200, 1000);
             enemy.tl().waitUntil(function (e) {
-                JGUtil.homing(enemy, _this.my, 30 / t, e.elapsed);
+                jg.JGUtil.homing(enemy, _this.my, 30 / t, e.elapsed);
             });
         } else if(r < 4000) {
             var margin = Math.min(this.game.height - enemy.y, enemy.y);
             var t = this.game.random(400, 1200);
             var x = this.game.random(-150, 150);
             var m = this.game.random(-margin, margin);
-            var easing = Easing.RANDOM(this.game);
+            var ary = [];
+            for(var i in jg.Easing) {
+                ary.push(i);
+            }
+            var easing = jg.Easing[ary[this.game.random(0, ary.length - 1)]];
             var r2 = this.game.random(0, 99);
             if(r2 < 70) {
                 enemy.tl().moveBy(0, m, t, easing).moveBy(0, -m, t, easing).loop();
@@ -313,14 +315,13 @@ var ShootingScene = (function (_super) {
         this.append(enemy);
     };
     return ShootingScene;
-})(Scene);
+})(jg.Scene);
 var VEnemy = (function (_super) {
     __extends(VEnemy, _super);
     function VEnemy() {
-        _super.call(this, 32, 32, game.r("eye"));
-        this.frame = [
-            16
-        ];
+        _super.call(this, game.r("eye"), 32, 32);
+        this.srcX = 0;
+        this.srcY = 128;
         if(game.random(0, 9) < 1) {
             this.homingShot = true;
         }
@@ -342,20 +343,20 @@ var VEnemy = (function (_super) {
         return s;
     };
     return VEnemy;
-})(Sprite);
+})(jg.Sprite);
 var VShot = (function (_super) {
     __extends(VShot, _super);
     function VShot(owner, size, color) {
         if(!size) {
             size = 7;
         }
-        _super.call(this, size, 16, ShapeStyle.Fill, color ? color : "orange");
+        _super.call(this, size, 16, jg.ShapeStyle.Fill, color ? color : "orange");
         this.owner = owner;
         this.speed = 80;
         this.moveTo(owner.x + owner.width / 2 - size / 2, owner.y);
     }
     return VShot;
-})(Shape);
+})(jg.Shape);
 var VShootingScene = (function (_super) {
     __extends(VShootingScene, _super);
     function VShootingScene(game) {
@@ -366,7 +367,7 @@ var VShootingScene = (function (_super) {
         this.scrollSpeed = 80;
         this.directions = {
         };
-        this.limit = new Rectangle(0, 0, game.width - 32, 0);
+        this.limit = new jg.Rectangle(0, 0, game.width - 32, 0);
         this.score = 0;
     }
     VShootingScene.prototype.start = function () {
@@ -382,32 +383,31 @@ var VShootingScene = (function (_super) {
         this.game.addTimer(500, this, this.timer);
         this.game.addTimer(200, this, this.timer2);
         this.game.setBgColor(0, 0, 0, 255);
-        this.my = new Sprite(32, 32, game.r("eye"));
-        this.my.frame = [
-            14
-        ];
+        this.my = new jg.Sprite(game.r("eye"), 32, 32);
+        this.my.srcX = 96;
+        this.my.srcY = 96;
         this.my.moveTo(game.width / 2, game.height);
         this.append(this.my);
         this.power = 0;
     };
     VShootingScene.prototype.touchdown = function (e) {
-        this.move = JGUtil.getMovePoint(e, this.my, 4, this.speed);
+        this.move = jg.JGUtil.getMovePoint(e, this.my, 4, this.speed);
     };
     VShootingScene.prototype.touchup = function (e) {
         delete this.move;
     };
     VShootingScene.prototype.keydown = function (e) {
-        if(e.key == Keytype.Left || e.key == Keytype.Right || e.key == Keytype.Up || e.key == Keytype.Down) {
+        if(e.key == jg.Keytype.Left || e.key == jg.Keytype.Right || e.key == jg.Keytype.Up || e.key == jg.Keytype.Down) {
             this.directions[e.key] = true;
         } else {
-            this.directions[Keytype.Enter] = true;
+            this.directions[jg.Keytype.Enter] = true;
         }
     };
     VShootingScene.prototype.keyup = function (e) {
-        if(e.key == Keytype.Left || e.key == Keytype.Right || e.key == Keytype.Up || e.key == Keytype.Down) {
+        if(e.key == jg.Keytype.Left || e.key == jg.Keytype.Right || e.key == jg.Keytype.Up || e.key == jg.Keytype.Down) {
             delete this.directions[e.key];
         } else {
-            delete this.directions[Keytype.Enter];
+            delete this.directions[jg.Keytype.Enter];
         }
     };
     VShootingScene.prototype.scrollBy = function (x, y, layerName) {
@@ -443,7 +443,7 @@ var VShootingScene = (function (_super) {
         $("#score").html((Math.round(this.root.scroll.y * 0.1) + this.score).toString());
     };
     VShootingScene.prototype.timer2 = function () {
-        if(this.directions[Keytype.Enter]) {
+        if(this.directions[jg.Keytype.Enter]) {
             this.power += 2;
             return;
         }
@@ -476,16 +476,16 @@ var VShootingScene = (function (_super) {
         if(this.move) {
             this.my.moveBy(this.move.x * a, this.move.y * a);
         } else {
-            if(this.directions[Keytype.Up]) {
+            if(this.directions[jg.Keytype.Up]) {
                 this.my.moveBy(0, -this.speed * a);
             }
-            if(this.directions[Keytype.Down]) {
+            if(this.directions[jg.Keytype.Down]) {
                 this.my.moveBy(0, this.speed * a);
             }
-            if(this.directions[Keytype.Left]) {
+            if(this.directions[jg.Keytype.Left]) {
                 this.my.moveBy(-this.speed * a, 0);
             }
-            if(this.directions[Keytype.Right]) {
+            if(this.directions[jg.Keytype.Right]) {
                 this.my.moveBy(this.speed * a, 0);
             }
         }
@@ -533,7 +533,7 @@ var VShootingScene = (function (_super) {
                 } else {
                     s.y += s.speed * a;
                     if(s.homingShot) {
-                        JGUtil.homingX(s, this.my, 30 / 800, t);
+                        jg.JGUtil.homingX(s, this.my, 30 / 800, t);
                     }
                 }
             }
@@ -573,13 +573,13 @@ var VShootingScene = (function (_super) {
             return;
         }
         this.my.tl().scaleTo(20, 1000).and().fadeOut(1000).then(function () {
-            var label = new Label("GAME OVER", 32, "red");
+            var label = new jg.Label("GAME OVER", 32, "red");
             label.setTextAlign("center");
             label.setTextBaseline("middle");
             label.moveTo(_this.game.width / 2, _this.game.height / 2 + (-_this.root.scroll.y));
             _this.append(label);
             _this.updateScore();
-            var label = new Label("ブラウザの更新ボタンで再度遊べます", 12, "red");
+            var label = new jg.Label("ブラウザの更新ボタンで再度遊べます", 12, "red");
             label.setTextAlign("center");
             label.setTextBaseline("middle");
             label.moveTo(_this.game.width / 2, _this.game.height / 2 + 32 + (-_this.root.scroll.y));
@@ -604,14 +604,18 @@ var VShootingScene = (function (_super) {
         if(r < 800) {
             var t = this.game.random(200, 1000);
             enemy.tl().waitUntil(function (e) {
-                JGUtil.homing(enemy, _this.my, 30 / t, e.elapsed);
+                jg.JGUtil.homing(enemy, _this.my, 30 / t, e.elapsed);
             });
         } else if(r < 4000) {
             var margin = Math.min(this.game.width - enemy.x, enemy.x);
             var m = this.game.random(-margin, margin);
             var t = this.game.random(400, 1200);
             var y = this.game.random(-150, 150);
-            var easing = Easing.RANDOM(this.game);
+            var ary = [];
+            for(var i in jg.Easing) {
+                ary.push(i);
+            }
+            var easing = jg.Easing[ary[this.game.random(0, ary.length - 1)]];
             var r2 = this.game.random(0, 99);
             if(r2 < 70) {
                 enemy.tl().moveBy(m, 0, t, easing).moveBy(-m, 0, t, easing).loop();
@@ -625,7 +629,7 @@ var VShootingScene = (function (_super) {
         this.append(enemy);
     };
     return VShootingScene;
-})(Scene);
+})(jg.Scene);
 var GameOverScene = (function (_super) {
     __extends(GameOverScene, _super);
     function GameOverScene(game, score) {
@@ -634,11 +638,11 @@ var GameOverScene = (function (_super) {
         this.started.handle(this, this.startHandle);
     }
     GameOverScene.prototype.startHandle = function () {
-        var caption1 = new Label("GAME", 72, "red");
-        var caption2 = new Label("OVER", 72, "red");
-        var score = new Label("score: ", 24, "green", "middle");
-        var score2 = new Label(this.score.toString(), 32, "yellow", "middle");
-        var guide = new Label("※ブラウザの更新ボタンで再度遊べます※", 14, "white");
+        var caption1 = new jg.Label("GAME", 72, "red");
+        var caption2 = new jg.Label("OVER", 72, "red");
+        var score = new jg.Label("score: ", 24, "green", "middle");
+        var score2 = new jg.Label(this.score.toString(), 32, "yellow", "middle");
+        var guide = new jg.Label("※ブラウザの更新ボタンで再度遊べます※", 14, "white");
         caption1.setTextAlign("center");
         caption2.setTextAlign("center");
         guide.setTextAlign("center");
@@ -654,7 +658,7 @@ var GameOverScene = (function (_super) {
         this.append(guide);
     };
     return GameOverScene;
-})(Scene);
+})(jg.Scene);
 var PhysActionScene = (function (_super) {
     __extends(PhysActionScene, _super);
     function PhysActionScene(game) {
@@ -680,29 +684,29 @@ var PhysActionScene = (function (_super) {
             switch(ek.param.keyCode) {
                 case 90:
                     switch(this.gravityDirection) {
-                        case Angle.Down:
-                            this.gravityDirection = Angle.Right;
+                        case jg.Angle.Down:
+                            this.gravityDirection = jg.Angle.Right;
                             this.world.setGravity({
                                 x: 10,
                                 y: 0
                             });
                             break;
-                        case Angle.Right:
-                            this.gravityDirection = Angle.Up;
+                        case jg.Angle.Right:
+                            this.gravityDirection = jg.Angle.Up;
                             this.world.setGravity({
                                 x: 0,
                                 y: -10
                             });
                             break;
-                        case Angle.Up:
-                            this.gravityDirection = Angle.Left;
+                        case jg.Angle.Up:
+                            this.gravityDirection = jg.Angle.Left;
                             this.world.setGravity({
                                 x: -10,
                                 y: 0
                             });
                             break;
-                        case Angle.Left:
-                            this.gravityDirection = Angle.Down;
+                        case jg.Angle.Left:
+                            this.gravityDirection = jg.Angle.Down;
                             this.world.setGravity({
                                 x: 0,
                                 y: 10
@@ -717,12 +721,12 @@ var PhysActionScene = (function (_super) {
     };
     PhysActionScene.prototype.createScoreLayer = function () {
         var layer = this.createLayer("score");
-        var label = new Label("SCORE:", 13, "red");
-        var label2 = new Label("TIME:", 13, "red");
-        this.timeLabel = new Label((this.time / 1000).toString() + ".00", 13, "red");
+        var label = new jg.Label("SCORE:", 13, "red");
+        var label2 = new jg.Label("TIME:", 13, "red");
+        this.timeLabel = new jg.Label((this.time / 1000).toString() + ".00", 13, "red");
         this.timeLabel.setTextAlign("right");
         this.timeLabel.moveTo(this.game.width - 20, 0);
-        this.scoreLabel = new Label(this.score.toString(), 13, "red");
+        this.scoreLabel = new jg.Label(this.score.toString(), 13, "red");
         this.scoreLabel.moveTo(label.width + 6, 0);
         label.moveTo(0, 0);
         label2.moveTo(this.game.width - label2.width - 60, 0);
@@ -747,26 +751,26 @@ var PhysActionScene = (function (_super) {
     PhysActionScene.prototype.addEnemy = function () {
         var _this = this;
         var r = this.game.random(0, 99);
-        var shapeType = ShapeType.Rect;
+        var shapeType = jg.ShapeType.Rect;
         var color;
         if(r < 3) {
             this.world.attachOption.density = 4.5;
             color = "#ff0000";
         } else if(r < 70) {
-            shapeType = ShapeType.Arc;
+            shapeType = jg.ShapeType.Arc;
             this.world.attachOption.density = 1;
             color = "#3399ff";
         } else {
-            shapeType = ShapeType.Arc;
+            shapeType = jg.ShapeType.Arc;
             this.world.attachOption.density = 3.5;
             color = "#ff8800";
         }
         this.world.attachOption.friction = 0.5;
         this.world.attachOption.shapeType = shapeType;
-        var s = new Shape(32, 32, ShapeStyle.Fill, color, shapeType);
+        var s = new jg.Shape(32, 32, jg.ShapeStyle.Fill, color, shapeType);
         s.moveTo(this.game.random(this.ground_rect.left, this.ground_rect.right), this.game.random(this.ground_rect.top, this.ground_rect.bottom));
         this.append(s);
-        s.setDrawOption("globalAlpha", 0);
+        s.hide();
         var opt = this.world.attachOption.clone();
         s.tl().fadeIn(1000).then(function () {
             _this.world.attach(s, opt);
@@ -776,7 +780,7 @@ var PhysActionScene = (function (_super) {
         this.addEnemy();
     };
     PhysActionScene.prototype.start = function () {
-        this.deleteEntity = new Array();
+        this.deleteEntity = [];
         game = this.game;
         game.setBgColor(0, 0, 0, 255);
         this.time = 30000;
@@ -785,16 +789,16 @@ var PhysActionScene = (function (_super) {
         this.createScoreLayer();
         this.world = new jgb2.World(game);
         var world = this.world;
-        this.gravityDirection = Angle.Down;
+        this.gravityDirection = jg.Angle.Down;
         this.ground_size = {
             width: 600,
             height: 600
         };
-        this.ground_rect = new Rectangle(20, 20, this.ground_size.width - 20 * 2, this.ground_size.height - 20 * 2);
-        var ground = new Shape(this.ground_size.width - 20, 20, ShapeStyle.Fill, "silver");
-        var ground2 = new Shape(this.ground_size.width - 20, 20, ShapeStyle.Fill, "silver");
-        var ground3 = new Shape(20, this.ground_size.height - 20, ShapeStyle.Fill, "silver");
-        var ground4 = new Shape(20, this.ground_size.height - 20, ShapeStyle.Fill, "silver");
+        this.ground_rect = new jg.Rectangle(20, 20, this.ground_size.width - 20 * 2, this.ground_size.height - 20 * 2);
+        var ground = new jg.Shape(this.ground_size.width - 20, 20, jg.ShapeStyle.Fill, "silver");
+        var ground2 = new jg.Shape(this.ground_size.width - 20, 20, jg.ShapeStyle.Fill, "silver");
+        var ground3 = new jg.Shape(20, this.ground_size.height - 20, jg.ShapeStyle.Fill, "silver");
+        var ground4 = new jg.Shape(20, this.ground_size.height - 20, jg.ShapeStyle.Fill, "silver");
         ground.moveTo(20, this.ground_size.width - 20);
         ground2.moveTo(20, 20);
         ground3.moveTo(20, 20);
@@ -803,16 +807,16 @@ var PhysActionScene = (function (_super) {
         this.append(ground2);
         this.append(ground3);
         this.append(ground4);
-        var chara = new Character(32, 32, game.r("c16"));
+        var chara = new jg.Character(game.r("c16"), 32, 32);
         chara.charaCol = 10;
         chara.charaSeq = 18;
         chara.angleSeq = {
         };
-        chara.angleSeq[Angle.Up] = 0;
-        chara.angleSeq[Angle.Right] = 1;
-        chara.angleSeq[Angle.Down] = 2;
-        chara.angleSeq[Angle.Left] = 3;
-        chara.angle(Angle.Right);
+        chara.angleSeq[jg.Angle.Up] = 0;
+        chara.angleSeq[jg.Angle.Right] = 1;
+        chara.angleSeq[jg.Angle.Down] = 2;
+        chara.angleSeq[jg.Angle.Left] = 3;
+        chara.angle(jg.Angle.Right);
         chara.moveTo(100, this.ground_rect.bottom - 20);
         this.append(chara);
         this.chara = chara;
@@ -834,7 +838,7 @@ var PhysActionScene = (function (_super) {
             y: game.height / 2 - this.chara.height / 2
         };
         world.enableContactEvent();
-        world.preSolve = new Trigger();
+        world.preSolve = new jg.Trigger();
         world.preSolve.handle(this, this.preSolve);
     };
     PhysActionScene.prototype.beginContact = function (e) {
@@ -888,7 +892,7 @@ var PhysActionScene = (function (_super) {
         var _this = this;
         this.world.stop();
         for(var i = 0; i < this.root.entities.length; i++) {
-            this.root.entities[i].removeDrawOption("globalAlpha");
+            this.root.entities[i].show();
         }
         if(anime) {
             this.root.tl().fadeOut(1000).then(function () {
@@ -931,8 +935,8 @@ var PhysActionScene = (function (_super) {
         }
         if(this.key != undefined) {
             switch(this.key) {
-                case Keytype.Up:
-                    this.chara.angle(Angle.Up);
+                case jg.Keytype.Up:
+                    this.chara.angle(jg.Angle.Up);
                     if(v.y > -30) {
                         this.charaP.addVelocity({
                             x: 0,
@@ -940,8 +944,8 @@ var PhysActionScene = (function (_super) {
                         });
                     }
                     break;
-                case Keytype.Down:
-                    this.chara.angle(Angle.Down);
+                case jg.Keytype.Down:
+                    this.chara.angle(jg.Angle.Down);
                     if(v.y < 30) {
                         this.charaP.addVelocity({
                             x: 0,
@@ -949,8 +953,8 @@ var PhysActionScene = (function (_super) {
                         });
                     }
                     break;
-                case Keytype.Left:
-                    this.chara.angle(Angle.Left);
+                case jg.Keytype.Left:
+                    this.chara.angle(jg.Angle.Left);
                     if(v.x > -30) {
                         this.charaP.addVelocity({
                             x: -1,
@@ -958,8 +962,8 @@ var PhysActionScene = (function (_super) {
                         });
                     }
                     break;
-                case Keytype.Right:
-                    this.chara.angle(Angle.Right);
+                case jg.Keytype.Right:
+                    this.chara.angle(jg.Angle.Right);
                     if(v.x < 30) {
                         this.charaP.addVelocity({
                             x: 1,
@@ -1016,7 +1020,7 @@ var PhysActionScene = (function (_super) {
         return xf && yf;
     };
     return PhysActionScene;
-})(Scene);
+})(jg.Scene);
 var AdventureScene = (function (_super) {
     __extends(AdventureScene, _super);
     function AdventureScene(game) {
@@ -1032,21 +1036,18 @@ var AdventureScene = (function (_super) {
         this.texts.push("以上です。\n最初に戻ります。");
         this.textIndex = -1;
         var game = this.game;
-        this.bg = new Sprite(480, 480, game.r("hankagai"));
+        this.bg = new jg.Sprite(game.r("hankagai"));
         this.append(this.bg);
         var textLayer = this.createLayer("text");
-        var textWindow = new MessageWindow({
-            width: game.width - 20,
-            height: 110
-        });
+        var textWindow = new jg.MessageWindow(game.width - 20, 110);
         textWindow.moveTo((game.width - textWindow.width) / 2, (game.height - textWindow.height) - 10);
         textLayer.append(textWindow);
         this.textWindow = textWindow;
         this.enablePointingEvent();
         this.pointDown.handle(this, this.onpointdown);
-        this.keyDown = new Trigger();
+        this.keyDown = new jg.Trigger();
         this.keyDown.handle(this, this.onkeydown);
-        this.keyUp = new Trigger();
+        this.keyUp = new jg.Trigger();
         this.keyUp.handle(this, this.onkeyup);
         textWindow.hide();
         this.started.handle(this, this.start);
@@ -1057,7 +1058,7 @@ var AdventureScene = (function (_super) {
     AdventureScene.prototype.onkeydown = function (e) {
         if(e.param.keyCode == 17) {
             this.textWindow.fastMode();
-        } else if(e.key == Keytype.Enter) {
+        } else if(e.key == jg.Keytype.Enter) {
             if(this.textWindow.isReaded) {
                 this.nextText();
             }
@@ -1093,7 +1094,7 @@ var AdventureScene = (function (_super) {
         }
     };
     return AdventureScene;
-})(Scene);
+})(jg.Scene);
 var CustomLoadingScene = (function (_super) {
     __extends(CustomLoadingScene, _super);
     function CustomLoadingScene() {
@@ -1105,11 +1106,11 @@ var CustomLoadingScene = (function (_super) {
             width: this.game.width / 10,
             height: this.game.height / 10
         };
-        this.shapes = new Array();
+        this.shapes = [];
         for(var x = 0; x < 10; x++) {
-            this.shapes[x] = new Array();
+            this.shapes[x] = [];
             for(var y = 0; y < 10; y++) {
-                var shape = new Shape(this.gridSize.width, this.gridSize.height, ShapeStyle.Fill, "#000");
+                var shape = new jg.Shape(this.gridSize.width, this.gridSize.height, jg.ShapeStyle.Fill, "#000");
                 this.shapes[x][y] = shape;
                 shape.tl().fadeTo(0.5, 500).fadeIn(500).loop();
                 shape.moveTo(x * this.gridSize.width, y * this.gridSize.height);
@@ -1137,4 +1138,4 @@ var CustomLoadingScene = (function (_super) {
         }
     };
     return CustomLoadingScene;
-})(LoadingScene);
+})(jg.LoadingScene);
