@@ -30,7 +30,8 @@ module jgengine {
         public sceneIndex: number;
         public changeScene(scene: jg.Scene, effect?: any, endOldScene?: bool): void;
         public endScene(effect?: any): void;
-        public main(): void;
+        public _main(): void;
+        public main(noStart?: bool): void;
     }
 }
 module jgengine {

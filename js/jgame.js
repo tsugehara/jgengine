@@ -1013,10 +1013,17 @@ var jg;
             this.handlers = [];
         }
         Trigger.prototype.handleInsert = function (index, owner, handler) {
-            this.handlers.splice(index, 0, {
-                owner: owner,
-                handler: handler
-            });
+            if(!handler) {
+                this.handlers.splice(index, 0, {
+                    owner: window,
+                    handler: owner
+                });
+            } else {
+                this.handlers.splice(index, 0, {
+                    owner: owner,
+                    handler: handler
+                });
+            }
         };
         Trigger.prototype.handle = function (owner, handler) {
             if(!handler) {
@@ -1093,83 +1100,36 @@ var jg;
 (function (jg) {
     var SimpleSound = (function () {
         function SimpleSound() { }
-        SimpleSound.getAudioContext = function getAudioContext() {
-            if(SimpleSound.context) {
-                return SimpleSound.context;
-            }
-            SimpleSound.context = SimpleSound._getAudioContext();
-            return SimpleSound.context;
-        };
-        SimpleSound._getAudioContext = function _getAudioContext() {
-            if(window["AudioContext"]) {
-                return new window["AudioContext"]();
-            } else if(window["webkitAudioContext"]) {
-                return new window["webkitAudioContext"]();
-            } else {
-                return null;
-            }
-        };
-        SimpleSound.play = function play(sound, loop, when, gain) {
-            var context = SimpleSound.getAudioContext();
-            var bufferSource = context.createBufferSource();
-            if(loop) {
-                bufferSource.loop = true;
-            }
-            bufferSource.buffer = sound;
-            if(gain) {
-                bufferSource.connect(gain);
-            } else {
-                if(!SimpleSound.soundGain) {
-                    var soundGain = context.createGain();
-                    soundGain.connect(context.destination);
-                    SimpleSound.soundGain = soundGain;
-                }
-                bufferSource.connect(SimpleSound.soundGain);
-            }
-            bufferSource.start(when === undefined ? 0 : when);
-            return bufferSource;
+        SimpleSound.play = function play(sound, loop) {
+            var _sound = new Audio(null);
+            _sound.src = sound.src;
+            _sound.loop = loop ? loop : false;
+            ;
+            _sound.play();
+            return _sound;
         };
         SimpleSound.hasBgm = function hasBgm() {
-            return SimpleSound.bgmSource !== undefined;
+            return SimpleSound.bgm !== undefined;
         };
-        SimpleSound.playBgm = function playBgm(sound, loop, when) {
-            if(SimpleSound.bgmSource) {
+        SimpleSound.playBgm = function playBgm(sound, loop) {
+            if(SimpleSound.bgm) {
                 SimpleSound.stopBgm();
             }
-            if(!SimpleSound.bgmGain) {
-                var context = SimpleSound.getAudioContext();
-                var bgmGain = context.createGain();
-                bgmGain.connect(context.destination);
-                SimpleSound.bgmGain = bgmGain;
-            }
-            SimpleSound.bgmSource = SimpleSound.play(sound, loop, when, SimpleSound.bgmGain);
-            return SimpleSound.bgmSource;
+            sound.load();
+            sound.loop = loop ? loop : false;
+            sound.play();
+            SimpleSound.bgm = sound;
+            return SimpleSound.bgm;
         };
-        SimpleSound.stop = function stop(source, when) {
+        SimpleSound.stop = function stop(source) {
             if(!source) {
                 return;
             }
-            source.stop(when === undefined ? 0 : when);
+            source.pause();
         };
-        SimpleSound.stopBgm = function stopBgm(when) {
-            SimpleSound.stop(SimpleSound.bgmSource, when);
-            delete SimpleSound.bgmSource;
-        };
-        SimpleSound.tone = function tone(hertz, seconds) {
-            hertz = hertz !== undefined ? hertz : 200;
-            seconds = seconds !== undefined ? seconds : 1;
-            var nChannels = 1;
-            var sampleRate = 44100;
-            var amplitude = 2;
-            var context = SimpleSound.getAudioContext();
-            var buffer = context.createBuffer(nChannels, seconds * sampleRate, sampleRate);
-            var fArray = buffer.getChannelData(0);
-            for(var i = 0; i < fArray.length; i++) {
-                var time = i / buffer.sampleRate;
-                var angle = hertz * time * Math.PI;
-                fArray[i] = Math.sin(angle) * amplitude;
-            }
-            return buffer;
+        SimpleSound.stopBgm = function stopBgm() {
+            SimpleSound.stop(SimpleSound.bgm);
+            delete SimpleSound.bgm;
         };
         return SimpleSound;
     })();
@@ -1257,20 +1217,30 @@ var jg;
         }
         ScriptResourceLoader.prototype.load = function (url, identifier) {
             var _this = this;
-            var script = document.createElement("script");
-            var heads = document.getElementsByTagName("head");
-            if(heads.length == 0) {
-                throw "can not find head tag";
-            }
-            script.src = url + "?" + (new Date()).getTime();
             var callback = this.completed;
-            script.onload = function () {
-                callback.call(_this, identifier, script, true);
+            var waitLoader = function () {
+                if(ScriptResourceLoader.loading) {
+                    window.setTimeout(waitLoader, 100);
+                    return;
+                }
+                ScriptResourceLoader.loading = true;
+                var script = document.createElement("script");
+                var heads = document.getElementsByTagName("head");
+                if(heads.length == 0) {
+                    throw "can not find head tag";
+                }
+                script.src = url + "?" + (new Date()).getTime();
+                script.onload = function () {
+                    callback.call(_this, identifier, script, true);
+                    ScriptResourceLoader.loading = false;
+                };
+                script.onerror = function () {
+                    callback.call(_this, identifier, script, false);
+                    ScriptResourceLoader.loading = false;
+                };
+                heads[0].appendChild(script);
             };
-            script.onerror = function () {
-                callback.call(_this, identifier, script, false);
-            };
-            heads[0].appendChild(script);
+            waitLoader();
         };
         ScriptResourceLoader.prototype.completed = function (name, script, is_success) {
             if(!is_success) {
@@ -1291,26 +1261,17 @@ var jg;
         }
         SoundResourceLoader.prototype.load = function (url, identifier) {
             var _this = this;
-            var request = new XMLHttpRequest();
-            request.open("GET", this.resource.structure.soundUrl(url), true);
-            request.responseType = "arraybuffer";
-            var callback = this.completed;
-            request.onload = function () {
-                var context = jg.SimpleSound.getAudioContext();
-                if(context) {
-                    context.decodeAudioData(request.response, function (decodedAudio) {
-                        callback.call(_this, identifier, decodedAudio, true);
-                    }, function () {
-                        callback.call(_this, identifier, null, false);
-                    });
-                } else {
-                    callback.call(_this, identifier, null, false);
-                }
-            };
-            request.onerror = function () {
-                callback.call(_this, identifier, null, false);
-            };
-            request.send();
+            var audio = new Audio(null);
+            audio.autoplay = false;
+            audio.preload = "auto";
+            audio.src = this.resource.structure.soundUrl(url);
+            audio.load();
+            audio.addEventListener("canplaythrough", function () {
+                _this.completed(identifier, audio, true);
+            }, true);
+            audio.addEventListener("error", function () {
+                _this.completed(identifier, audio, false);
+            }, true);
         };
         SoundResourceLoader.prototype.completed = function (name, audio, is_success) {
             if(!is_success) {
@@ -3006,8 +2967,6 @@ var jg;
             this.inputEventMap[jg.InputEventType.Point][jg.InputEventAction.Down] = "pointDown";
             this.inputEventMap[jg.InputEventType.Point][jg.InputEventAction.Move] = "pointMove";
             this.inputEventMap[jg.InputEventType.Point][jg.InputEventAction.Up] = "pointUp";
-            this.keyboardHandler();
-            this.pointHandler();
             if(document.getElementById("fps_show")) {
                 this.fps = document.getElementById("fps_show");
             }
@@ -3125,7 +3084,7 @@ var jg;
             this.isPointDown = false;
             e.preventDefault();
         };
-        Game.prototype.pointHandler = function () {
+        Game.prototype.enablePointHandler = function () {
             this.dragParam = null;
             try  {
                 if(this.isTouchEnable()) {
@@ -3154,7 +3113,7 @@ var jg;
                 e.preventDefault();
             }
         };
-        Game.prototype.keyboardHandler = function () {
+        Game.prototype.enableKeyboardHandler = function () {
             try  {
                 document.addEventListener("keydown", jg.JGUtil.proxy(this.onkeydown, this), false);
                 document.addEventListener("keyup", jg.JGUtil.proxy(this.onkeyup, this), false);
@@ -3331,6 +3290,9 @@ var jg;
             var _this = this;
             var fps_stack = new Array();
             var _main = function (t) {
+                if(_this._exit) {
+                    return;
+                }
                 if(t === undefined) {
                     t = Date.now ? Date.now() : new Date().getTime();
                 }
@@ -3365,9 +3327,7 @@ var jg;
                         }
                     }
                 }
-                if(!_this._exit) {
-                    window.requestAnimationFrame(_main);
-                }
+                window.requestAnimationFrame(_main);
             };
             this.tick = 0;
             this.renderTick = 0;

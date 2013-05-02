@@ -17,6 +17,9 @@ var jgengine;
             var _this = this;
             var fps_stack = new Array();
             var _main = function (t) {
+                if(_this._exit) {
+                    return;
+                }
                 if(t === undefined) {
                     t = Date.now ? Date.now() : new Date().getTime();
                 }
@@ -46,9 +49,7 @@ var jgengine;
                     _this.renderer.render();
                     _this.renderTick = t;
                 }
-                if(!_this._exit) {
-                    window.requestAnimationFrame(_main);
-                }
+                window.requestAnimationFrame(_main);
             };
             this.tick = 0;
             this.renderTick = 0;
@@ -71,6 +72,9 @@ var jgengine;
             var _this = this;
             var fps_stack = new Array();
             var _main = function () {
+                if(_this._exit) {
+                    return;
+                }
                 var t = Date.now ? Date.now() : new Date().getTime();
                 if(_this.tick > (t + 10000) || (_this.tick + 10000) < t) {
                     _this.tick = t - 1;
@@ -86,11 +90,12 @@ var jgengine;
                 for(var i = 0; i < _this.timers.length; i++) {
                     _this.timers[i].tryFire(time);
                 }
-                if(!_this._exit) {
-                    window.setTimeout(_main, _this.wait);
-                }
+                window.setTimeout(_main, _this.wait);
             };
             var _render = function (t) {
+                if(_this._exit) {
+                    return;
+                }
                 if(t === undefined) {
                     t = Date.now ? Date.now() : new Date().getTime();
                 }
@@ -111,9 +116,7 @@ var jgengine;
                         }
                     }
                 }
-                if(!_this._exit) {
-                    window.requestAnimationFrame(_render);
-                }
+                window.requestAnimationFrame(_render);
             };
             this.tick = 0;
             this.renderTick = 0;
@@ -195,12 +198,13 @@ var jgengine;
             });
             _super.prototype.endScene.call(this, effect);
         };
-        LoggingGame.prototype.main = function () {
+        LoggingGame.prototype._main = function () {
             var _this = this;
-            this.log = new jg.Trigger();
             var fps_stack = new Array();
-            this.sceneIndex = 1;
             var _main = function (t) {
+                if(_this._exit) {
+                    return;
+                }
                 if(t === undefined) {
                     t = Date.now ? Date.now() : new Date().getTime();
                 }
@@ -240,13 +244,18 @@ var jgengine;
                         }
                     }
                 }
-                if(!_this._exit) {
-                    window.requestAnimationFrame(_main);
-                }
+                window.requestAnimationFrame(_main);
             };
+            window.requestAnimationFrame(_main);
+        };
+        LoggingGame.prototype.main = function (noStart) {
+            this.log = new jg.Trigger();
+            this.sceneIndex = 1;
             this.tick = 0;
             this.renderTick = 0;
-            window.requestAnimationFrame(_main);
+            if(!noStart) {
+                this._main();
+            }
         };
         return LoggingGame;
     })(jg.Game);
