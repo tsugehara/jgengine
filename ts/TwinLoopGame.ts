@@ -2,7 +2,7 @@ module jgengine {
 	export class TwinLoopGame extends jg.Game {
 		wait:number = 0;
 		main() {
-			var fps_stack = new number[];
+			var fps_stack:number[] = [];
 			var _main = () => {
 				if (this._exit)
 					return;

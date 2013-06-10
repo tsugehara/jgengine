@@ -24,7 +24,7 @@ module jgengine {
 		}
 
 		_main() {
-			var fps_stack = new number[];
+			var fps_stack:number[] = [];
 			var _main = (t:number) => {
 				if (this._exit)
 					return;
