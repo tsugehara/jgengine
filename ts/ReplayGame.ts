@@ -6,7 +6,7 @@ module jgengine {
 		}
 		pointHandler() {
 		}
-		changeScene(scene:jg.Scene, effect?:any, endOldScene?:bool) {
+		changeScene(scene:jg.Scene, effect?:any, endOldScene?:boolean) {
 			this.sceneIndex++;
 			super.changeScene(scene, effect, endOldScene);
 		}

@@ -1,9 +1,9 @@
 module jgengine {
 	export class LoggingGame extends jg.Game {
-		log:jg.Trigger;
-		sceneIndex:number;
+		log: jg.Trigger;
+		sceneIndex: number;
 
-		changeScene(scene:jg.Scene, effect?:any, endOldScene?:bool) {
+		changeScene(scene:jg.Scene, effect?:any, endOldScene?:boolean) {
 			this.sceneIndex++;
 			this.log.fastFire({
 				type: endOldScene ? 3 : 1,
@@ -72,7 +72,7 @@ module jgengine {
 			window.requestAnimationFrame(_main);
 		}
 
-		main(noStart?:bool) {
+		main(noStart?:boolean) {
 			this.log = new jg.Trigger();
 			this.sceneIndex = 1;
 

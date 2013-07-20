@@ -9,3 +9,5 @@ Serializer.ts
 BinarySerializer.ts
 --out ../js/jgengine.js
 --declaration
+--disallowbool
+--disallowimportmodule
