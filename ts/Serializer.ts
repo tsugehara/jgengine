@@ -7,9 +7,7 @@ module jgengine {
 
 	//base serializer
 	export class Serializer {
-		game:jg.Game;
-		constructor(game:jg.Game) {
-			this.game = game;
+		constructor() {
 		}
 
 		serialize(log:UpdateLog):any {

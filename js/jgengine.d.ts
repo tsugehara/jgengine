@@ -51,8 +51,7 @@ declare module jgengine {
         events: jg.InputEvent[];
     }
     class Serializer {
-        public game: jg.Game;
-        constructor(game: jg.Game);
+        constructor();
         public serialize(log: UpdateLog): any;
         public deserialize(data: any): UpdateLog;
     }
@@ -61,7 +60,8 @@ declare module jgengine {
     class BinarySerializer extends jgengine.Serializer {
         public actionMap: any;
         public actionMapReverse: any;
-        constructor(game: jg.Game);
+        public keymap: any;
+        constructor();
         public writeDouble(buffer: ArrayBuffer, offset: number, val: number): void;
         public readDouble(buffer: ArrayBuffer, offset: number): number;
         public serializeAll(logs: jgengine.UpdateLog[]): ArrayBuffer;

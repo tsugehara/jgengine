@@ -1079,10 +1079,7 @@ var jg;
             if(this.handlers.length == 0) {
                 return;
             }
-            var handlers = [];
-            for(var i = 0; i < this.handlers.length; i++) {
-                handlers[i] = this.handlers[i];
-            }
+            var handlers = this.handlers.concat();
             for(var i = 0; i < handlers.length; i++) {
                 handlers[i].handler.call(handlers[i].owner, param);
             }

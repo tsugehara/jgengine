@@ -18,7 +18,7 @@ function play() {
 	}
 	console.log("---------------------");
 	player = new jgengine.ReplayGame(480, 300, document.getElementById("player"));
-	var s2 = new jgengine.BinarySerializer(player);
+	var s2 = new jgengine.BinarySerializer();
 	player.setSeed(seed);
 	var logScene = 1;
 	var _main = function() {
@@ -60,7 +60,7 @@ function play() {
 		var scene = new ShootingScene(player);
 		scene.start();
 	}
-	player.loaded.handle(loaded);
+	player.handle.loaded(loaded);
 	game = player;
 	window.requestAnimationFrame(_main);
 }
@@ -71,7 +71,7 @@ window.onload = function() {
 		game.setSeed(seed);
 	}
 	seed = game.seed;
-	var serializer = new jgengine.BinarySerializer(game);
+	var serializer = new jgengine.BinarySerializer();
 	game.log.handle(function(e) {
 		var data = serializer.serialize(e);
 		logs.push(data);

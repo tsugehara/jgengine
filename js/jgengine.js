@@ -299,8 +299,7 @@ var jgengine;
 var jgengine;
 (function (jgengine) {
     var Serializer = (function () {
-        function Serializer(game) {
-            this.game = game;
+        function Serializer() {
         }
         Serializer.prototype.serialize = function (log) {
             throw "not implemented";
@@ -317,8 +316,8 @@ var jgengine;
 (function (jgengine) {
     var BinarySerializer = (function (_super) {
         __extends(BinarySerializer, _super);
-        function BinarySerializer(game) {
-            _super.call(this, game);
+        function BinarySerializer() {
+            _super.call(this);
             this.actionMap = {};
             this.actionMap[jg.InputEventAction.Down] = 4;
             this.actionMap[jg.InputEventAction.Move] = 8;
@@ -327,6 +326,14 @@ var jgengine;
             this.actionMapReverse[4] = jg.InputEventAction.Down;
             this.actionMapReverse[8] = jg.InputEventAction.Move;
             this.actionMapReverse[16] = jg.InputEventAction.Up;
+            this.keymap = {
+                13: jg.Keytype.Enter,
+                27: jg.Keytype.Esc,
+                37: jg.Keytype.Left,
+                38: jg.Keytype.Up,
+                39: jg.Keytype.Right,
+                40: jg.Keytype.Down
+            };
         }
         BinarySerializer.prototype.writeDouble = function (buffer, offset, val) {
             var view = new Uint8Array(buffer, offset, 8);
@@ -481,7 +488,6 @@ var jgengine;
         BinarySerializer.prototype.deserializeAll = function (data) {
             var len1 = data.byteLength;
             var ary = [];
-            var game = this.game;
             var offset = 0;
 
             while (offset < len1) {
@@ -505,7 +511,7 @@ var jgengine;
                         var ek = {
                             keyCode: k[0]
                         };
-                        e = new jg.InputKeyboardEvent(this.actionMapReverse[et[0] - 1], game.keymap[k[0]], ek);
+                        e = new jg.InputKeyboardEvent(this.actionMapReverse[et[0] - 1], this.keymap[k[0]], ek);
                         offset += 8;
                     } else {
                         var pos = {
@@ -536,7 +542,6 @@ var jgengine;
                 t: t,
                 events: []
             };
-            var game = this.game;
             while (offset < len) {
                 var e;
                 var et = new Uint32Array(data, offset, 1);
@@ -545,7 +550,7 @@ var jgengine;
                     var ek = {
                         keyCode: k[0]
                     };
-                    e = new jg.InputKeyboardEvent(this.actionMapReverse[et[0] - 1], game.keymap[k[0]], ek);
+                    e = new jg.InputKeyboardEvent(this.actionMapReverse[et[0] - 1], this.keymap[k[0]], ek);
                     offset += 8;
                 } else {
                     var pos = {

@@ -3,8 +3,9 @@ module jgengine {
 	export class BinarySerializer extends Serializer {
 		actionMap:any;
 		actionMapReverse:any;
-		constructor(game:jg.Game) {
-			super(game);
+		keymap: any;
+		constructor() {
+			super();
 			this.actionMap = {};
 			this.actionMap[jg.InputEventAction.Down] = 4;
 			this.actionMap[jg.InputEventAction.Move] = 8;
@@ -13,6 +14,14 @@ module jgengine {
 			this.actionMapReverse[4] = jg.InputEventAction.Down;
 			this.actionMapReverse[8] = jg.InputEventAction.Move;
 			this.actionMapReverse[16] = jg.InputEventAction.Up;
+			this.keymap = {
+				13: jg.Keytype.Enter,
+				27: jg.Keytype.Esc,
+				37: jg.Keytype.Left,
+				38: jg.Keytype.Up,
+				39: jg.Keytype.Right,
+				40: jg.Keytype.Down
+			}
 		}
 
 		//reference by https://gist.github.com/uupaa/4106426
@@ -182,7 +191,6 @@ module jgengine {
 		deserializeAll(data:ArrayBuffer):any {
 			var len1 = data.byteLength;
 			var ary = [];
-			var game = this.game;
 			var offset = 0;
 
 			while (offset < len1) {
@@ -208,7 +216,7 @@ module jgengine {
 						}
 						e = new jg.InputKeyboardEvent(
 							this.actionMapReverse[et[0]-1],
-							game.keymap[k[0]],
+							this.keymap[k[0]],
 							ek
 						);
 						offset += 8;
@@ -245,7 +253,6 @@ module jgengine {
 				t: t,
 				events: []
 			}
-			var game = this.game;
 			while (offset < len) {
 				var e;
 				var et = new Uint32Array(data, offset, 1);
@@ -256,7 +263,7 @@ module jgengine {
 					}
 					e = new jg.InputKeyboardEvent(
 						this.actionMapReverse[et[0]-1],
-						game.keymap[k[0]],
+						this.keymap[k[0]],
 						ek
 					);
 					offset += 8;
