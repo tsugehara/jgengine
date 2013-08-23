@@ -1,4 +1,5 @@
 ../../jgame.js/lib/jgame.d.ts
+--removeComments
 FrameGame.ts
 TwinLoopGame.ts
 StaticGame.ts
@@ -9,5 +10,3 @@ Serializer.ts
 BinarySerializer.ts
 --out ../js/jgengine.js
 --declaration
---disallowbool
---disallowimportmodule

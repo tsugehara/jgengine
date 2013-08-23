@@ -300,6 +300,8 @@ var jgengine;
 (function (jgengine) {
     var Serializer = (function () {
         function Serializer() {
+            this.event_serializers = {};
+            this.event_deserializers = {};
         }
         Serializer.prototype.serialize = function (log) {
             throw "not implemented";
@@ -308,12 +310,80 @@ var jgengine;
         Serializer.prototype.deserialize = function (data) {
             throw "not implemented";
         };
+
+        Serializer.prototype.serializeAll = function (logs) {
+            throw "not implemented";
+        };
+
+        Serializer.prototype.deserializeAll = function (data) {
+            throw "not implemented";
+        };
         return Serializer;
     })();
     jgengine.Serializer = Serializer;
 })(jgengine || (jgengine = {}));
 var jgengine;
 (function (jgengine) {
+    var BinaryKeyEventSerializer = (function () {
+        function BinaryKeyEventSerializer(serializer) {
+            this.serializer = serializer;
+            this.keymap = {
+                13: jg.Keytype.Enter,
+                27: jg.Keytype.Esc,
+                37: jg.Keytype.Left,
+                38: jg.Keytype.Up,
+                39: jg.Keytype.Right,
+                40: jg.Keytype.Down
+            };
+        }
+        BinaryKeyEventSerializer.prototype.size = function (event) {
+            return 8;
+        };
+
+        BinaryKeyEventSerializer.prototype.serialize = function (buffer, offset, event) {
+            var writer = new Uint32Array(buffer, offset, 2);
+            writer[0] = 1 | this.serializer.actionMap[event.action];
+            writer[1] = (event).param.keyCode;
+            return 8;
+        };
+
+        BinaryKeyEventSerializer.prototype.deserialize = function (buffer, offset, out) {
+            var k = new Uint32Array(buffer, offset, 2);
+            out.events.push(new jg.InputKeyboardEvent(this.serializer.actionMapReverse[k[0] - 1], this.keymap[k[1]], { keyCode: k[1] }));
+            return 8;
+        };
+        return BinaryKeyEventSerializer;
+    })();
+    jgengine.BinaryKeyEventSerializer = BinaryKeyEventSerializer;
+    var BinaryPointEventSerializer = (function () {
+        function BinaryPointEventSerializer(serializer) {
+            this.serializer = serializer;
+        }
+        BinaryPointEventSerializer.prototype.size = function (event) {
+            return 20;
+        };
+
+        BinaryPointEventSerializer.prototype.serialize = function (buffer, offset, event) {
+            var et = new Uint32Array(buffer, offset, 1);
+            et[0] = 2 | this.serializer.actionMap[event.action];
+            this.serializer.writeDouble(buffer, offset + 4, (event).point.x);
+            this.serializer.writeDouble(buffer, offset + 12, (event).point.y);
+            return 20;
+        };
+
+        BinaryPointEventSerializer.prototype.deserialize = function (buffer, offset, out) {
+            var et = new Uint32Array(buffer, offset, 1);
+            var pos = {
+                x: this.serializer.readDouble(buffer, offset + 4),
+                y: this.serializer.readDouble(buffer, offset + 12)
+            };
+            out.events.push(new jg.InputPointEvent(this.serializer.actionMapReverse[et[0] - 2], null, pos));
+            return 20;
+        };
+        return BinaryPointEventSerializer;
+    })();
+    jgengine.BinaryPointEventSerializer = BinaryPointEventSerializer;
+
     var BinarySerializer = (function (_super) {
         __extends(BinarySerializer, _super);
         function BinarySerializer() {
@@ -326,14 +396,17 @@ var jgengine;
             this.actionMapReverse[4] = jg.InputEventAction.Down;
             this.actionMapReverse[8] = jg.InputEventAction.Move;
             this.actionMapReverse[16] = jg.InputEventAction.Up;
-            this.keymap = {
-                13: jg.Keytype.Enter,
-                27: jg.Keytype.Esc,
-                37: jg.Keytype.Left,
-                38: jg.Keytype.Up,
-                39: jg.Keytype.Right,
-                40: jg.Keytype.Down
-            };
+
+            var keyboardSerializer = new BinaryKeyEventSerializer(this);
+            var pointSerializer = new BinaryPointEventSerializer(this);
+            this.event_serializers[jg.InputEventType.Keyboard] = keyboardSerializer;
+            this.event_deserializers[1 | 4] = keyboardSerializer;
+            this.event_deserializers[1 | 16] = keyboardSerializer;
+
+            this.event_serializers[jg.InputEventType.Point] = pointSerializer;
+            this.event_deserializers[2 | 4] = pointSerializer;
+            this.event_deserializers[2 | 8] = pointSerializer;
+            this.event_deserializers[2 | 16] = pointSerializer;
         }
         BinarySerializer.prototype.writeDouble = function (buffer, offset, val) {
             var view = new Uint8Array(buffer, offset, 8);
@@ -415,8 +488,11 @@ var jgengine;
                 }
 
                 var sub_size = 12;
-                for (var j = 0; j < log.events.length; j++)
-                    sub_size += (log.events[j].type == jg.InputEventType.Keyboard) ? 8 : 20;
+                var e;
+                for (var j = 0; j < log.events.length; j++) {
+                    e = log.events[j];
+                    sub_size += this.event_serializers[e.type].size(e);
+                }
 
                 s = new Uint16Array(ret, offset, 1);
                 s[0] = sub_size;
@@ -425,19 +501,8 @@ var jgengine;
                 this.writeDouble(ret, offset + 4, log.t);
                 offset += 12;
                 for (var j = 0; j < log.events.length; j++) {
-                    var e = log.events[j];
-                    var et = new Uint32Array(ret, offset, 1);
-                    if (e.type == jg.InputEventType.Keyboard) {
-                        et[0] = 1 | this.actionMap[e.action];
-                        var key = new Uint32Array(ret, offset + 4, 1);
-                        key[0] = e.param.keyCode;
-                        offset += 8;
-                    } else {
-                        et[0] = 2 | this.actionMap[e.action];
-                        this.writeDouble(ret, offset + 4, (e).point.x);
-                        this.writeDouble(ret, offset + 12, (e).point.y);
-                        offset += 20;
-                    }
+                    e = log.events[j];
+                    offset += this.event_serializers[e.type].serialize(ret, offset, e);
                 }
             }
 
@@ -459,8 +524,11 @@ var jgengine;
             }
 
             var size = 12;
-            for (var i = 0; i < log.events.length; i++)
-                size += (log.events[i].type == jg.InputEventType.Keyboard) ? 8 : 20;
+            var e;
+            for (var i = 0; i < log.events.length; i++) {
+                e = log.events[i];
+                size += this.event_serializers[e.type].size(e);
+            }
 
             ret = new ArrayBuffer(size);
             s = new Uint16Array(ret, 0, 1);
@@ -468,20 +536,10 @@ var jgengine;
             this.writeDouble(ret, 4, log.t);
             var offset = 12;
             for (var i = 0; i < log.events.length; i++) {
-                var e = log.events[i];
-                var et = new Uint32Array(ret, offset, 1);
-                if (e.type == jg.InputEventType.Keyboard) {
-                    et[0] = 1 | this.actionMap[e.action];
-                    var key = new Uint32Array(ret, offset + 4, 1);
-                    key[0] = e.param.keyCode;
-                    offset += 8;
-                } else {
-                    et[0] = 2 | this.actionMap[e.action];
-                    this.writeDouble(ret, offset + 4, (e).point.x);
-                    this.writeDouble(ret, offset + 12, (e).point.y);
-                    offset += 20;
-                }
+                e = log.events[i];
+                offset += this.event_serializers[e.type].serialize(ret, offset, e);
             }
+
             return ret;
         };
 
@@ -495,6 +553,7 @@ var jgengine;
                 var len = offset + lens[0];
                 if (lens[0] < 12 || len > len1)
                     break;
+
                 var meta = new Uint8Array(data, offset + 2, 2);
                 var t = this.readDouble(data, offset + 4);
                 offset += 12;
@@ -504,25 +563,10 @@ var jgengine;
                     events: []
                 };
                 while (offset < len) {
-                    var e;
                     var et = new Uint32Array(data, offset, 1);
-                    if ((et[0] & 1) == 1) {
-                        var k = new Uint32Array(data, offset + 4, 1);
-                        var ek = {
-                            keyCode: k[0]
-                        };
-                        e = new jg.InputKeyboardEvent(this.actionMapReverse[et[0] - 1], this.keymap[k[0]], ek);
-                        offset += 8;
-                    } else {
-                        var pos = {
-                            x: this.readDouble(data, offset + 4),
-                            y: this.readDouble(data, offset + 12)
-                        };
-                        e = new jg.InputPointEvent(this.actionMapReverse[et[0] - 2], null, pos);
-                        offset += 20;
-                    }
-                    row.events.push(e);
+                    offset += this.event_deserializers[et[0]].deserialize(data, offset, row);
                 }
+
                 ary.push(row);
             }
             var ret = {
@@ -543,25 +587,10 @@ var jgengine;
                 events: []
             };
             while (offset < len) {
-                var e;
                 var et = new Uint32Array(data, offset, 1);
-                if ((et[0] & 1) == 1) {
-                    var k = new Uint32Array(data, offset + 4, 1);
-                    var ek = {
-                        keyCode: k[0]
-                    };
-                    e = new jg.InputKeyboardEvent(this.actionMapReverse[et[0] - 1], this.keymap[k[0]], ek);
-                    offset += 8;
-                } else {
-                    var pos = {
-                        x: this.readDouble(data, offset + 4),
-                        y: this.readDouble(data, offset + 12)
-                    };
-                    e = new jg.InputPointEvent(this.actionMapReverse[et[0] - 2], null, pos);
-                    offset += 20;
-                }
-                ret.events.push(e);
+                offset += this.event_deserializers[et[0]].deserialize(data, offset, ret);
             }
+
             return ret;
         };
         return BinarySerializer;

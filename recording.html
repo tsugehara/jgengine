@@ -31,7 +31,19 @@ function play() {
 		do {
 			var log = logs.shift();
 			var e = s2.deserialize(log);
-			if (e.type != 0) {
+			if (e.type == 0) {
+				if (player.sceneIndex > logScene) {
+					//読み飛ばす
+					console.log("skip scene to scene synchronized..."+player.sceneIndex+":"+logScene);
+				} else {
+					for (var i=0; i<e.events.length; i++) 
+						player.eventQueue.push(e.events[i]);
+					player.manualUpdate(e.t)
+					player.manualRender();
+				}
+			} else if (e.type == 4) {	//clear input state
+				//nothing todo
+			} else {
 				logScene = e.t;
 				if (player.sceneIndex < logScene) {
 					console.log("wait for synchronized scene... "+player.sceneIndex+":"+logScene);
@@ -40,18 +52,8 @@ function play() {
 				} else {
 					
 				}
-			} else {
-				if (player.sceneIndex > logScene) {
-					//読み飛ばす
-					console.log("skipt scene to scene synchronized..."+player.sceneIndex+":"+logScene);
-				} else {
-					for (var i=0; i<e.events.length; i++) 
-						player.eventQueue.push(e.events[i]);
-					player.manualUpdate(e.t)
-					player.manualRender();
-				}
 			}
-		} while (e.type != 0);
+		} while (e.type != 0 && logs.length > 0);
 		window.requestAnimationFrame(_main);
 	}
 	player.preload({eye:"eye-multi.png"});
@@ -60,7 +62,7 @@ function play() {
 		var scene = new ShootingScene(player);
 		scene.start();
 	}
-	player.handle.loaded(loaded);
+	player.loaded.handle(loaded);
 	game = player;
 	window.requestAnimationFrame(_main);
 }
@@ -70,6 +72,8 @@ window.onload = function() {
 		seed = parseInt(location.search.substr(1));
 		game.setSeed(seed);
 	}
+	game.enableKeyboardHandler();
+	game.enablePointHandler();
 	seed = game.seed;
 	var serializer = new jgengine.BinarySerializer();
 	game.log.handle(function(e) {
@@ -80,6 +84,7 @@ window.onload = function() {
 	var loaded = function() {
 		game.loaded.remove(loaded);
 		var scene = new ShootingScene(game);
+		document.getElementById("recorder").focus();
 		scene.start();
 	}
 	game.loaded.handle(loaded);

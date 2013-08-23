@@ -45,28 +45,69 @@ declare module jgengine {
     }
 }
 declare module jgengine {
+    interface EventSerializer {
+        serializer: Serializer;
+        serialize(buffer: ArrayBuffer, offset: number, event: SerializableEvent): number;
+        size(event: SerializableEvent): number;
+    }
+    interface EventDeserializer {
+        serializer: Serializer;
+        deserialize(buffer: ArrayBuffer, offset: number, out: UpdateLog): number;
+    }
+    interface SerializableEvent {
+        type: number;
+        action: number;
+    }
     interface UpdateLog {
         type: number;
         t: number;
-        events: jg.InputEvent[];
+        events: SerializableEvent[];
+    }
+    interface DeserializedData {
+        seek: number;
+        data: UpdateLog[];
     }
     class Serializer {
+        public event_serializers: {
+            [key: number]: EventSerializer;
+        };
+        public event_deserializers: {
+            [key: number]: EventDeserializer;
+        };
         constructor();
         public serialize(log: UpdateLog): any;
         public deserialize(data: any): UpdateLog;
+        public serializeAll(logs: UpdateLog[]): ArrayBuffer;
+        public deserializeAll(data: ArrayBuffer): DeserializedData;
     }
 }
 declare module jgengine {
+    class BinaryKeyEventSerializer implements jgengine.EventSerializer, jgengine.EventDeserializer {
+        public serializer: BinarySerializer;
+        public keymap: {
+            [key: number]: jg.Keytype;
+        };
+        constructor(serializer: BinarySerializer);
+        public size(event: jgengine.SerializableEvent): number;
+        public serialize(buffer: ArrayBuffer, offset: number, event: jgengine.SerializableEvent): number;
+        public deserialize(buffer: ArrayBuffer, offset: number, out: jgengine.UpdateLog): number;
+    }
+    class BinaryPointEventSerializer implements jgengine.EventSerializer, jgengine.EventDeserializer {
+        public serializer: BinarySerializer;
+        constructor(serializer: BinarySerializer);
+        public size(event: jgengine.SerializableEvent): number;
+        public serialize(buffer: ArrayBuffer, offset: number, event: jgengine.SerializableEvent): number;
+        public deserialize(buffer: ArrayBuffer, offset: number, out: jgengine.UpdateLog): number;
+    }
     class BinarySerializer extends jgengine.Serializer {
         public actionMap: any;
         public actionMapReverse: any;
-        public keymap: any;
         constructor();
         public writeDouble(buffer: ArrayBuffer, offset: number, val: number): void;
         public readDouble(buffer: ArrayBuffer, offset: number): number;
         public serializeAll(logs: jgengine.UpdateLog[]): ArrayBuffer;
         public serialize(log: jgengine.UpdateLog): ArrayBuffer;
-        public deserializeAll(data: ArrayBuffer): any;
+        public deserializeAll(data: ArrayBuffer): jgengine.DeserializedData;
         public deserialize(data: ArrayBuffer): jgengine.UpdateLog;
     }
 }
