@@ -86,13 +86,10 @@ module jgengine {
 			var keyboardSerializer = new BinaryKeyEventSerializer(this);
 			var pointSerializer = new BinaryPointEventSerializer(this);
 			this.event_serializers[jg.InputEventType.Keyboard] = keyboardSerializer;
-			this.event_deserializers[1 | 4] = keyboardSerializer;
-			this.event_deserializers[1 | 16] = keyboardSerializer;
+			this.event_deserializers[1] = keyboardSerializer;
 
 			this.event_serializers[jg.InputEventType.Point] = pointSerializer;
-			this.event_deserializers[2 | 4] = pointSerializer;
-			this.event_deserializers[2 | 8] = pointSerializer;
-			this.event_deserializers[2 | 16] = pointSerializer;
+			this.event_deserializers[2] = pointSerializer;
 		}
 
 		//reference by https://gist.github.com/uupaa/4106426
@@ -273,7 +270,7 @@ module jgengine {
 				}
 				while (offset < len) {
 					var et = new Uint32Array(data, offset, 1);
-					offset += this.event_deserializers[et[0]].deserialize(
+					offset += this.event_deserializers[et[0] & 0xFFFFFFE3].deserialize(
 						data,
 						offset,
 						row
@@ -301,7 +298,7 @@ module jgengine {
 			}
 			while (offset < len) {
 				var et = new Uint32Array(data, offset, 1);
-				offset += this.event_deserializers[et[0]].deserialize(
+				offset += this.event_deserializers[et[0] & 0xFFFFFFE3].deserialize(
 					data,
 					offset,
 					ret

@@ -1660,7 +1660,7 @@
 	};
 	UserSerializer.prototype.serialize = function (buffer, offset, event) {
 		var et = new Uint32Array(buffer, offset, 2);
-		et[0] = 5;
+		et[0] = 32;
 		et[1] = event.seed;
 		return 8;
 	};
@@ -1674,7 +1674,7 @@
     var SetSeedEvent = (function (_super) {
         __extends(SetSeedEvent, _super);
         function SetSeedEvent(seed) {
-            _super.call(this, 5, null, null);
+            _super.call(this, 32, 0, null);
             this.seed = seed;
         }
         return SetSeedEvent;
@@ -1682,7 +1682,7 @@
 
 	test("Serialize-UserDefine", function() {
 		var serializer = new jgengine.BinarySerializer();
-		serializer.event_serializers[5] = new UserSerializer(serializer);
+		serializer.event_serializers[32] = new UserSerializer(serializer);
 		var user = new SetSeedEvent(100);
 		var log = {
 			type: 0,
@@ -1702,26 +1702,26 @@
 		deepEqual(0, deserialized.meta1);
 		deepEqual(0, deserialized.meta2);
 		deepEqual(1, deserialized.time);
-		deepEqual(5, deserialized.event_type);
+		deepEqual(32, deserialized.event_type);
 		deepEqual(100, deserialized.seed);
 	});
 
 	test("Deserialize-UserDefine", function() {
 		var serializer = new jgengine.BinarySerializer();
-		serializer.event_deserializers[5] = new UserSerializer(serializer);
+		serializer.event_deserializers[32] = new UserSerializer(serializer);
 		var log = new ArrayBuffer(20);
 		(new Uint16Array(log, 0, 1))[0] = 12;
 		(new Uint8Array(log, 2, 2))[0] = 0;
 		(new Uint8Array(log, 2, 2))[1] = 0;
 		writeDouble(log, 4, 1);
-		(new Uint32Array(log, 12, 2))[0] = 5;
+		(new Uint32Array(log, 12, 2))[0] = 32;
 		(new Uint32Array(log, 12, 2))[1] = 100;
 
 		var deserialized = serializer.deserialize(log);
 		deepEqual(1, deserialized.t);
 		deepEqual(1, deserialized.events.length);
-		deepEqual(5, deserialized.events[0].type);
-		deepEqual(null, deserialized.events[0].action);
+		deepEqual(32, deserialized.events[0].type);
+		deepEqual(0, deserialized.events[0].action);
 		deepEqual(100, deserialized.events[0].seed);
 	});
 
