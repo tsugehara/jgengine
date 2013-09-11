@@ -19,12 +19,6 @@ declare module jgengine {
     }
 }
 declare module jgengine {
-    class ManualGame extends jgengine.StaticGame {
-        public keyboardHandler(): void;
-        public pointHandler(): void;
-    }
-}
-declare module jgengine {
     class LoggingGame extends jg.Game {
         public log: jg.Trigger;
         public sceneIndex: number;
@@ -35,10 +29,8 @@ declare module jgengine {
     }
 }
 declare module jgengine {
-    class ReplayGame extends jgengine.ManualGame {
+    class ReplayGame extends jgengine.StaticGame {
         public sceneIndex: number;
-        public keyboardHandler(): void;
-        public pointHandler(): void;
         public changeScene(scene: jg.Scene, effect?: any, endOldScene?: boolean): void;
         public endScene(effect?: any): void;
         public main(): void;

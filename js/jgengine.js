@@ -20,35 +20,37 @@ var jgengine;
             var _main = function (t) {
                 if (_this._exit)
                     return;
+
                 if (t === undefined)
                     t = Date.now ? Date.now() : new Date().getTime();
-
-                if (_this.tick > (t + 10000) || (_this.tick + 10000) < t) {
-                    _this.tick = t - 1;
-                    _this.renderTick = t - _this.targetFps;
-                    _this.refresh();
+                if ((_this.tick + 500) < t || _this.tick > t) {
+                    if ((_this.tick + 10000) < t || (_this.tick > t + 500))
+                        _this.refresh();
+                    _this.tick = t - 1000 / 60;
+                    _this.renderTick = t;
                 }
 
                 var time = t - _this.tick;
                 for (var i = 0; i < _this.timers.length; i++)
                     _this.timers[i].tryFire(time);
 
-                if ((_this.renderTick + _this.targetFps) <= t) {
-                    if (_this.fps) {
-                        fps_stack.push(t);
-                        if (fps_stack.length == 20) {
-                            _this.fps.innerHTML = Math.round(20000 / (t - fps_stack[0])).toString();
-                            fps_stack = [];
-                        }
-                    }
-
+                if (_this.renderTick <= t) {
                     _this.raiseInputEvent();
-                    _this.update.fire(t - _this.tick);
+                    _this.update.fire(time);
                     _this.tick = t;
                     if (_this.render)
                         _this.render.fire();
                     _this.renderer.render();
-                    _this.renderTick = t;
+                    _this.renderTick = t + _this.targetFps;
+
+                    if (_this.fps) {
+                        if (fps_stack.length == 19) {
+                            _this.fps.innerHTML = Math.round(20000 / (t - fps_stack[0])).toString();
+                            fps_stack = [];
+                        } else {
+                            fps_stack.push(t);
+                        }
+                    }
                 }
 
                 window.requestAnimationFrame(_main);
@@ -73,17 +75,19 @@ var jgengine;
         TwinLoopGame.prototype.main = function () {
             var _this = this;
             var fps_stack = [];
+            var f = (function () {
+                if (Date.now)
+                    return Date.now;
+
+                return function () {
+                    return new Date().getTime();
+                };
+            })();
             var _main = function () {
                 if (_this._exit)
                     return;
 
-                var t = Date.now ? Date.now() : new Date().getTime();
-                if (_this.tick > (t + 10000) || (_this.tick + 10000) < t) {
-                    _this.tick = t - 1;
-                    _this.renderTick = t - _this.targetFps;
-                    _this.refresh();
-                }
-
+                var t = f();
                 var time = t - _this.tick;
                 if (_this.tick < t) {
                     _this.raiseInputEvent();
@@ -104,13 +108,20 @@ var jgengine;
                 if (t === undefined)
                     t = Date.now ? Date.now() : new Date().getTime();
 
-                if (_this.targetFps == 0 || _this.renderTick <= t) {
+                if ((_this.renderTick + 500) < t || _this.renderTick > t) {
+                    if ((_this.renderTick + 10000) < t || (_this.renderTick > t + 500))
+                        _this.refresh();
+                    _this.tick = f() - _this.wait;
+                    _this.renderTick = t;
+                }
+
+                if (_this.renderTick <= t) {
                     if (_this.render)
                         _this.render.fire();
 
                     _this.renderer.render();
-                    if (_this.targetFps)
-                        _this.renderTick = t + _this.targetFps;
+                    _this.renderTick = t + _this.targetFps;
+
                     if (_this.fps) {
                         if (fps_stack.length == 19) {
                             _this.fps.innerHTML = Math.round(20000 / (t - fps_stack[0])).toString();
@@ -124,9 +135,9 @@ var jgengine;
                 window.requestAnimationFrame(_render);
             };
 
-            this.tick = 0;
+            this.tick = f();
             this.renderTick = 0;
-            window.setTimeout(_main, 0);
+            window.setTimeout(_main, this.wait);
             window.requestAnimationFrame(_render);
         };
         return TwinLoopGame;
@@ -163,21 +174,6 @@ var jgengine;
         return StaticGame;
     })(jg.Game);
     jgengine.StaticGame = StaticGame;
-})(jgengine || (jgengine = {}));
-var jgengine;
-(function (jgengine) {
-    var ManualGame = (function (_super) {
-        __extends(ManualGame, _super);
-        function ManualGame() {
-            _super.apply(this, arguments);
-        }
-        ManualGame.prototype.keyboardHandler = function () {
-        };
-        ManualGame.prototype.pointHandler = function () {
-        };
-        return ManualGame;
-    })(jgengine.StaticGame);
-    jgengine.ManualGame = ManualGame;
 })(jgengine || (jgengine = {}));
 var jgengine;
 (function (jgengine) {
@@ -276,10 +272,6 @@ var jgengine;
         function ReplayGame() {
             _super.apply(this, arguments);
         }
-        ReplayGame.prototype.keyboardHandler = function () {
-        };
-        ReplayGame.prototype.pointHandler = function () {
-        };
         ReplayGame.prototype.changeScene = function (scene, effect, endOldScene) {
             this.sceneIndex++;
             _super.prototype.changeScene.call(this, scene, effect, endOldScene);
@@ -293,7 +285,7 @@ var jgengine;
             _super.prototype.main.call(this);
         };
         return ReplayGame;
-    })(jgengine.ManualGame);
+    })(jgengine.StaticGame);
     jgengine.ReplayGame = ReplayGame;
 })(jgengine || (jgengine = {}));
 var jgengine;

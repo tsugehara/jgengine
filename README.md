@@ -7,4 +7,4 @@ MIT License.
 
 ### Links ###
 * <a href="http://sourceforge.jp/projects/jgame-js/">jgame.js</a>
-* <a href="http://jgame-js.sourceforge.jp/modules/jgengine.html">demo</a>
+* <a href="http://jgame-js.sourceforge.jp/modules/jgengine/inedex.html">demo</a>

@@ -3,7 +3,6 @@
 FrameGame.ts
 TwinLoopGame.ts
 StaticGame.ts
-ManualGame.ts
 LoggingGame.ts
 ReplayGame.ts
 Serializer.ts

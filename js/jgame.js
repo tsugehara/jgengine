@@ -82,18 +82,6 @@ var jg;
         EffectType[EffectType["BoxIn45"] = 19] = "BoxIn45";
         EffectType[EffectType["ArcOut"] = 20] = "ArcOut";
         EffectType[EffectType["ArcIn"] = 21] = "ArcIn";
-        EffectType[EffectType["BoxOutBlack"] = 22] = "BoxOutBlack";
-        EffectType[EffectType["BoxOut45Black"] = 23] = "BoxOut45Black";
-        EffectType[EffectType["BoxInBlack"] = 24] = "BoxInBlack";
-        EffectType[EffectType["BoxIn45Black"] = 25] = "BoxIn45Black";
-        EffectType[EffectType["ArcOutBlack"] = 26] = "ArcOutBlack";
-        EffectType[EffectType["ArcInBlack"] = 27] = "ArcInBlack";
-        EffectType[EffectType["BoxOutWhite"] = 28] = "BoxOutWhite";
-        EffectType[EffectType["BoxOut45White"] = 29] = "BoxOut45White";
-        EffectType[EffectType["BoxInWhite"] = 30] = "BoxInWhite";
-        EffectType[EffectType["BoxIn45White"] = 31] = "BoxIn45White";
-        EffectType[EffectType["ArcOutWhite"] = 32] = "ArcOutWhite";
-        EffectType[EffectType["ArcInWhite"] = 33] = "ArcInWhite";
     })(jg.EffectType || (jg.EffectType = {}));
     var EffectType = jg.EffectType;
 })(jg || (jg = {}));
@@ -1294,7 +1282,7 @@ var jg;
                     this[mode + "End"]();
 
             var linkMode = this.currentMode();
-            if (newMode !== undefined && newMode != newMode)
+            if (newMode !== undefined)
                 this.changeMode(newMode);
 else if (linkMode && this[linkMode + "Show"])
                 this[linkMode + "Show"]();
@@ -1685,8 +1673,10 @@ var jg;
         };
 
         Label.prototype.addShadow = function (color) {
-            this.setDrawOption("shadowBlur", 2);
-            this.setDrawOption("shadowColor", color ? color : "black");
+            this.setDrawOption("shadowBlur", 1);
+            this.setDrawOption("shadowColor", color ? color : "rgba(0,0,0,0.8)");
+            this.setDrawOption("shadowOffsetX", 1);
+            this.setDrawOption("shadowOffsetY", 1);
         };
 
         Label.prototype.removeShadow = function () {
@@ -1710,19 +1700,29 @@ var jg;
         };
 
         Label.prototype.setFontSize = function (size) {
-            var font = this.getFont();
-            var firstPos = font.indexOf(" ");
-            this.setFont(size + "px " + font.substr(firstPos + 1));
+            var dom = document.createElement("div");
+            dom.style.font = this.getFont();
+            dom.style.fontSize = size + "px";
+            this.setFont(dom.style.font);
         };
 
         Label.prototype.getFontSize = function () {
-            var font = this.getFont();
-            var firstPos = font.indexOf(" ");
-            try  {
-                return parseInt(font.substr(0, firstPos - 2));
-            } catch (ex) {
-            }
-            return this.height;
+            var dom = document.createElement("div");
+            dom.style.font = this.getFont();
+            return Number(dom.style.fontSize.substr(0, dom.style.fontSize.length - 2));
+        };
+
+        Label.prototype.getFontFamily = function () {
+            var dom = document.createElement("div");
+            dom.style.font = this.getFont();
+            return dom.style.fontFamily;
+        };
+
+        Label.prototype.setFontFamily = function (family) {
+            var dom = document.createElement("div");
+            dom.style.font = this.getFont();
+            dom.style.fontFamily = family;
+            this.setFont(dom.style.font);
         };
 
         Label.prototype.setTextAlign = function (align) {
@@ -1831,12 +1831,12 @@ var jg;
 else
                 this.moveTo(0, 0);
 
-            this.defaultStyle = "#000";
+            this.defaultStyle = "#fff";
             this.defaultFont = "18px sans-serif";
-            this.defaultBlur = 0.6;
-            this.defaultShadowColor = "#000";
-            this.defaultShadowOffsetX = 0.3;
-            this.defaultShadowOffsetY = 0.3;
+            this.defaultBlur = 1;
+            this.defaultShadowColor = "rgba(0,0,0,0.8)";
+            this.defaultShadowOffsetX = 1;
+            this.defaultShadowOffsetY = 1;
 
             this.clip = new jg.Line({ x: 0, y: 0 });
             this.clip.addLine(this.width, 0);
@@ -2882,6 +2882,7 @@ var jg;
             this.pointMove = new jg.Trigger();
             this.keyDown = new jg.Trigger();
             this.keyUp = new jg.Trigger();
+            this.userEvent = new jg.Trigger();
             this.timers = [];
 
             this.scene = new jg.Scene(this);
@@ -3301,6 +3302,11 @@ else
         Game.prototype.raiseInputEvent = function () {
             var e;
             while (e = this.eventQueue.shift()) {
+                if (!this.inputEventMap[e.type]) {
+                    this.userEvent.fire(e);
+                    continue;
+                }
+
                 var n = this.inputEventMap[e.type][e.action];
                 if (e.type == jg.InputEventType.Keyboard) {
                     if (this.scene[n])
@@ -3333,23 +3339,22 @@ else
 
                 if (t === undefined)
                     t = Date.now ? Date.now() : new Date().getTime();
-                if (_this.tick > (t + 10000) || (_this.tick + 10000) < t) {
-                    _this.tick = t - 1;
-                    _this.renderTick = t - _this.targetFps;
-                    _this.refresh();
+                if ((_this.tick + 500) < t || _this.tick > t) {
+                    if ((_this.tick + 10000) < t || (_this.tick > t + 500))
+                        _this.refresh();
+                    _this.tick = t - 1000 / 60;
+                    _this.renderTick = t;
                 }
 
                 var time = t - _this.tick;
-                if (_this.tick < t) {
-                    _this.raiseInputEvent();
-                    _this.update.fire(time);
-                    _this.tick = t;
-                }
+                _this.raiseInputEvent();
+                _this.update.fire(time);
+                _this.tick = t;
 
                 for (var i = 0; i < _this.timers.length; i++)
                     _this.timers[i].tryFire(time);
 
-                if (_this.targetFps == 0 || _this.renderTick <= t) {
+                if (_this.renderTick <= t) {
                     if (_this.render)
                         _this.render.fire();
 

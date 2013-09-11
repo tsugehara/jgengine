@@ -14,37 +14,38 @@ module jgengine {
 			var _main = (t:number) => {
 				if (this._exit)
 					return;
+
 				if (t === undefined)
 					t = Date.now ? Date.now() : new Date().getTime();
-
-				if (this.tick > (t+10000) || (this.tick+10000) < t) {
-					//this.tick > (t+10000): 前回更新分が10秒以上未来の時間の場合。多分タイマーバグっとるのでリセット
-					//(this.tick+10000) < t: 10秒以上更新されてない。多分タイマーバグっとる。バグっとるよね？
-					this.tick = t - 1;
-					this.renderTick = t - this.targetFps;
-					this.refresh();
+				if ((this.tick+500) < t || this.tick > t) {
+					//this.tick > t自体はタブ切り替え程度でも結構頻発する
+					if ((this.tick+10000) < t || (this.tick > t+500))
+						this.refresh();
+					this.tick = t - 1000 / 60;
+					this.renderTick = t;
 				}
 
 				var time = t - this.tick;
 				for (var i=0; i<this.timers.length; i++)
 					this.timers[i].tryFire(time);
 
-				if ((this.renderTick+this.targetFps) <= t) {
-					if (this.fps) {
-						fps_stack.push(t);
-						if (fps_stack.length == 20) {
-							this.fps.innerHTML = Math.round(20000 / (t-fps_stack[0])).toString();
-							fps_stack = [];
-						}
-					}
-
+				if (this.renderTick <= t) {
 					this.raiseInputEvent();
-					this.update.fire(t - this.tick);
+					this.update.fire(time);
 					this.tick = t;
 					if (this.render)
 						this.render.fire();
 					this.renderer.render();
-					this.renderTick = t;
+					this.renderTick = t + this.targetFps;
+
+					if (this.fps) {
+						if (fps_stack.length == 19) {
+							this.fps.innerHTML = Math.round(20000 / (t-fps_stack[0])).toString();
+							fps_stack = [];
+						} else {
+							fps_stack.push(t);
+						}
+					}
 				}
 
 				window.requestAnimationFrame(_main);

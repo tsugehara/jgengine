@@ -1,11 +1,7 @@
 module jgengine {
 	//再生前提のゲーム
-	export class ReplayGame extends ManualGame {
+	export class ReplayGame extends StaticGame {
 		sceneIndex:number;
-		keyboardHandler() {
-		}
-		pointHandler() {
-		}
 		changeScene(scene:jg.Scene, effect?:any, endOldScene?:boolean) {
 			this.sceneIndex++;
 			super.changeScene(scene, effect, endOldScene);
